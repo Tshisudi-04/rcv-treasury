@@ -910,7 +910,7 @@ function confirmDelete(){
   db.collection("transactions").doc(pendingDeleteId).update({
     deleted:true,deletedBy:currentUser.email,deletedAt:firebase.firestore.FieldValue.serverTimestamp(),deletionReason:reason
   }).then(function(){
-    writeAuditLog("delete","Transaction deleted: ""+tx.description+"" ("+fmt(tx.amount)+") on "+tx.date+" — Reason: "+reason,currentProfile.email,tx.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
+    writeAuditLog("delete","Transaction deleted: \""+tx.description+"\" ("+fmt(tx.amount)+") on "+tx.date+" \u2014 Reason: "+reason,currentProfile.email,tx.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
     closeDelModal();
   }).catch(function(e){alert("Error: "+e.message);});
 }
