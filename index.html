@@ -607,7 +607,7 @@ function doSignOut(){
 function loadUserProfile(user){
   var email=user.email.toLowerCase();
   if(email===SUPER_ADMIN_EMAIL.toLowerCase()){
-    currentProfile={uid:user.uid,email:user.email,firstName:"Khathu",lastName:"(Admin)",role:"superadmin",branch:"all",status:"approved"};
+    currentProfile={uid:user.uid,email:user.email,firstName:"Khathu",lastName:"(IT Admin)",role:"superadmin",branch:"pe",status:"approved"};
     initApp();
   } else if(email===HEAD_TREASURER_EMAIL.toLowerCase()){
     currentProfile={uid:user.uid,email:user.email,firstName:"Head",lastName:"Treasurer",role:"headtreasurer",branch:"all",status:"approved"};
@@ -691,22 +691,22 @@ function writeAuditLog(action,description,userEmail,branch,visibleTo){
 function setupSidebar(){
   var p=currentProfile;
   document.getElementById("sidebarName").textContent=(p.firstName||"")+" "+(p.lastName||"");
-  var branchName=p.branch==="all"?"All Branches":(BRANCHES[p.branch]?BRANCHES[p.branch].name:p.branch);
+  var branchName=(p.branch==="all"&&p.role==="headtreasurer")?"All Branches":(BRANCHES[p.branch]?BRANCHES[p.branch].name:p.branch);
   document.getElementById("sidebarBranch").textContent=branchName;
   document.getElementById("topbarBranch").textContent=branchName;
   var badge=document.getElementById("sidebarRoleBadge");
-  var roleLabels={superadmin:"Super Admin",headtreasurer:"Head Treasurer",treasurer:"Branch Treasurer",council:"Council / Pastor"};
+  var roleLabels={superadmin:"IT Administrator",headtreasurer:"Head Treasurer",treasurer:"Branch Treasurer",council:"Pastor / Elder (View Only)"};
   var roleClasses={superadmin:"role-superadmin",headtreasurer:"role-headtreasurer",treasurer:"role-treasurer",council:"role-council"};
   badge.textContent=roleLabels[p.role]||p.role;badge.className="sidebar-role-badge "+(roleClasses[p.role]||"role-council");
   var nav=document.getElementById("sidebarNav"),items=[];
   items.push({section:"Main"});
   items.push({id:"dashboard",icon:"&#128202;",label:"Dashboard"});
-  if(p.role==="superadmin"||p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
+  if(p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
   items.push({id:"transactions",icon:"&#128179;",label:"Transactions"});
-  if(p.role!=="council") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
+  if(p.role!=="council"&&p.role!=="superadmin") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
   items.push({section:"Funds"});
   items.push({id:"requests",icon:"&#128203;",label:"Fund Requests",badge:true});
-  if(p.role==="treasurer"||p.role==="superadmin") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
+  if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
   items.push({section:"Reports"});
   items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
   items.push({section:"Security"});
@@ -762,7 +762,7 @@ function parseLocalDate(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2
 function fmt(n){return "R "+Number(n||0).toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function getSummary(txs){var i=0,e=0;txs.forEach(function(t){if(t.type==="income")i+=Number(t.amount);else e+=Number(t.amount);});return{income:i,expenses:e,balance:i-e};}
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function getMyTxs(){if(currentProfile.role==="superadmin"||currentProfile.role==="headtreasurer")return allTransactions;return allTransactions.filter(function(t){return t.branch===currentProfile.branch;});}
+function getMyTxs(){if(currentProfile.role==="headtreasurer")return allTransactions;return allTransactions.filter(function(t){return t.branch===currentProfile.branch;});}
 function getBranchName(b){return BRANCHES[b]?BRANCHES[b].name:b;}
 function getBranchColor(b){return BRANCHES[b]?BRANCHES[b].color:"#0f2456";}
 function isTxLocked(tx){
@@ -794,7 +794,7 @@ function navigateTo(page){
 // ===== DASHBOARD =====
 function renderDashboard(){
   var txs=getMyTxs(),s=getSummary(txs);
-  var isAdmin=currentProfile.role==="superadmin"||currentProfile.role==="headtreasurer";
+  var isAdmin=currentProfile.role==="headtreasurer";
   var pendingReqs=allRequests.filter(function(r){return r.status==="pending";}).length;
   var html='<div class="stats-grid">';
   html+=statCard("Total Income",fmt(s.income),"&#128200;","icon-green","All time");
@@ -874,7 +874,7 @@ function buildTxTable(txs,title,showFilters){
 }
 function renderTxRows(txs){
   if(txs.length===0)return'<div style="text-align:center;padding:40px;color:var(--gray-400)">&#128219; No transactions found for this period</div>';
-  var canDelete=currentProfile.role==="treasurer"||currentProfile.role==="superadmin";
+  var canDelete=currentProfile.role==="treasurer";
   var rows=txs.slice().sort(function(a,b){return parseLocalDate(b.date)-parseLocalDate(a.date);}).map(function(t){
     var locked=isTxLocked(t);
     var delBtn="";
@@ -982,7 +982,7 @@ function confirmSaveTx(){
 
 // ===== FUND REQUESTS =====
 function renderRequests(){
-  var isReviewer=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
+  var isReviewer=currentProfile.role==="headtreasurer";
   var myReqs=isReviewer?allRequests:allRequests.filter(function(r){return r.submittedBy===currentUser.email;});
   var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><div style="font-size:14px;color:var(--gray-500)">'+myReqs.length+' requests found</div>'+( currentProfile.role==="treasurer"?'<button class="btn btn-navy" onclick="navigateTo(\'newrequest\')">&#43; New Request</button>':"")+'</div>';
   if(myReqs.length===0){html+='<div style="text-align:center;padding:48px;color:var(--gray-400)">&#128203; No fund requests yet</div>';}
@@ -1065,7 +1065,7 @@ function submitRequest(){
 
 // ===== AUDIT LOG =====
 function renderAudit(){
-  var isAdmin=currentProfile.role==="superadmin"||currentProfile.role==="headtreasurer";
+  var isAdmin=currentProfile.role==="headtreasurer";
   var logs=isAdmin?auditLogs:auditLogs.filter(function(l){return l.userEmail===currentProfile.email||(l.branch&&l.branch===currentProfile.branch);});
   var html='<div class="card"><div class="card-header"><span class="card-title">&#128270; Audit Trail</span><span class="count-badge">'+logs.length+' entries</span></div><div style="padding:0 20px">';
   if(logs.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No audit entries yet</div>';
