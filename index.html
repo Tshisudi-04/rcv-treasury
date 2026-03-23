@@ -910,7 +910,7 @@ function confirmDelete(){
   db.collection("transactions").doc(pendingDeleteId).update({
     deleted:true,deletedBy:currentUser.email,deletedAt:firebase.firestore.FieldValue.serverTimestamp(),deletionReason:reason
   }).then(function(){
-    writeAuditLog("delete","Transaction deleted: \""+tx.description+"\" ("+fmt(tx.amount)+") on "+tx.date+" \u2014 Reason: "+reason,currentProfile.email,tx.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
+    writeAuditLog("delete","Transaction deleted: "+tx.description+" ("+fmt(tx.amount)+") on "+tx.date+" - Reason: "+reason,currentProfile.email,tx.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
     closeDelModal();
   }).catch(function(e){alert("Error: "+e.message);});
 }
@@ -950,7 +950,7 @@ function checkAndSaveTx(){
   var dup=allTransactions.find(function(t){return t.branch===branch&&String(t.amount)===String(Number(amount))&&t.date===date&&t.description.toLowerCase()===desc.toLowerCase();});
   if(dup){
     pendingTxData={amount:Number(amount),date:date,desc:desc,branch:branch};
-    document.getElementById("dupModalMsg").textContent="A transaction with the same amount ("+fmt(Number(amount))+"), date ("+date+") and description (""+desc+"") already exists for this branch. This could be a duplicate entry. Are you sure you want to save it?";
+    document.getElementById("dupModalMsg").textContent="Possible duplicate: same amount, date and description already exists for this branch. Continue?";
     document.getElementById("dupModal").classList.add("open");
     return;
   }
@@ -972,7 +972,7 @@ function confirmSaveTx(){
   }
   var si=document.getElementById("savingInd");if(si)si.style.display="block";
   db.collection("transactions").add(tx).then(function(docRef){
-    writeAuditLog("add","Transaction added: ""+desc+"" ("+fmt(amount)+") on "+date+" ["+branch+"]",currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
+    writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]",currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
     if(si)si.style.display="none";
     var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved and audit log updated.</div>';
     ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
