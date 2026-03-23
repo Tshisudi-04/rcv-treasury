@@ -105,6 +105,8 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .main-content{margin-left:260px;flex:1;min-height:100vh;}
 .topbar{background:white;border-bottom:1px solid var(--gray-200);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);}
 .topbar-title{font-size:18px;font-weight:700;color:var(--gray-800);}
+.mob-menu-btn{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-700);padding:4px;line-height:1;}
+@media(max-width:900px){.mob-menu-btn{display:block;}}
 .topbar-right{display:flex;align-items:center;gap:16px;}
 .topbar-branch-badge{background:var(--blue-light);color:var(--blue);font-size:12px;font-weight:700;padding:5px 12px;border-radius:99px;border:1px solid var(--blue-mid);}
 .sync-indicator{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);}
@@ -278,19 +280,67 @@ tr:hover td{background:var(--gray-50);}
 .modal p{font-size:14px;color:var(--gray-500);line-height:1.6;margin-bottom:20px;}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
 
+/* ===== MOBILE RESPONSIVE ===== */
 @media(max-width:900px){
   .sidebar{transform:translateX(-100%);}
   .sidebar.mob-open{transform:translateX(0);}
   .main-content{margin-left:0;}
-  .stats-grid,.branches-grid{grid-template-columns:1fr 1fr;}
-  .page-content{padding:20px 16px;}
-  .topbar{padding:0 16px;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .branches-grid{grid-template-columns:1fr 1fr;}
+  .page-content{padding:16px;}
+  .topbar{padding:0 14px;height:56px;}
+  .topbar-title{font-size:15px;}
   .fg-row,.form-row,.rp-grid,.report-options{grid-template-columns:1fr;}
   .request-detail-grid{grid-template-columns:1fr 1fr;}
   .security-bar{display:none;}
+  .form-card{padding:20px;}
+  .auth-screen{flex-direction:column;}
+  .auth-left{width:100%;min-height:auto;padding:28px 24px;}
+  .auth-left-body h2{font-size:22px;}
+  .auth-features{display:none;}
+  .auth-right{padding:24px;}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .card-header{padding:12px 14px;}
+  .nav-item{padding:12px 10px;}
+  .sidebar-brand{padding:18px 16px;}
+  .sidebar-user{padding:12px 16px;}
+  .sidebar-nav{padding:12px 8px;}
+  .sidebar-footer{padding:12px 16px;}
+  .request-card{padding:16px;}
+  .request-amount{font-size:17px;}
+  .stat-card{padding:16px;}
+  .stat-card-value{font-size:20px;}
+  .branch-summary-card{padding:16px;}
 }
-@media(max-width:480px){
-  .stats-grid,.branches-grid{grid-template-columns:1fr;}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .branches-grid{grid-template-columns:1fr;}
+  .bsc-stats{grid-template-columns:1fr 1fr;}
+  .auth-left{padding:20px 16px;}
+  .auth-right{padding:16px;}
+  .auth-card h1{font-size:20px;}
+  .form-card{padding:16px;max-width:100%;}
+  .request-detail-grid{grid-template-columns:1fr;}
+  .report-options{grid-template-columns:1fr;}
+  td{padding:10px 10px;}
+  th{padding:8px 10px;}
+  .topbar-branch-badge{display:none;}
+  .btn{padding:8px 14px;font-size:12px;}
+  .btn-primary{padding:13px;}
+}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr;}
+  .page-content{padding:12px;}
+}
+/* Touch friendly - bigger tap targets on mobile */
+@media(hover:none){
+  .nav-item{padding:14px 12px;}
+  .btn{min-height:44px;}
+  .del-btn{min-width:36px;min-height:36px;}
+  .filter-select{min-height:44px;font-size:16px;}
+  .fg input,.fg select,.fg textarea{font-size:16px;min-height:44px;}
+  .form-group input,.form-group select{font-size:16px;min-height:44px;}
+  table td,table th{white-space:nowrap;}
 }
 </style>
 </head>
@@ -462,7 +512,7 @@ tr:hover td{background:var(--gray-50);}
     <div class="main-content">
       <div class="topbar">
         <div style="display:flex;align-items:center;gap:14px">
-          <button style="display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-700);padding:4px" id="mobMenuBtn" onclick="toggleSidebar()">&#9776;</button>
+          <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleSidebar()">&#9776;</button>
           <div class="topbar-title" id="topbarTitle">Dashboard</div>
         </div>
         <div class="topbar-right">
@@ -485,6 +535,21 @@ tr:hover td{background:var(--gray-50);}
 // ============================================================
 var FIREBASE_CONFIG={apiKey:"AIzaSyDYIoAWfSGFbEeTyaFcD_18vJ6RVK4tcXk",authDomain:"church-finance-system-f1ca4.firebaseapp.com",projectId:"church-finance-system-f1ca4",storageBucket:"church-finance-system-f1ca4.firebasestorage.app",messagingSenderId:"209970272665",appId:"1:209970272665:web:909a10d23301a58ad0db08"};
 var SUPER_ADMIN_EMAIL="khathutshelotshisudi@gmail.com";
+// ============================================================
+//  EMAILJS CONFIG — Fill these in after EmailJS setup
+//  See setup instructions at bottom of this file
+// ============================================================
+var EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
+var EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
+var EMAILJS_TEMPLATE_REGISTRATION = "YOUR_TEMPLATE_ID_REGISTRATION";
+var EMAILJS_TEMPLATE_APPROVED = "YOUR_TEMPLATE_ID_APPROVED";
+var LOGIN_URL = "https://tshisudi-04.github.io/rcv-treasury";
+var emailjsReady = false;
+function initEmailJS(){
+  if(EMAILJS_PUBLIC_KEY==="YOUR_EMAILJS_PUBLIC_KEY") return;
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjsReady = true;
+}
 var HEAD_TREASURER_EMAIL="madzhiek@gmail.com";
 var TX_LOCK_DAYS=30; // transactions older than this cannot be deleted
 var SESSION_TIMEOUT=30*60; // 30 minutes in seconds
@@ -574,8 +639,9 @@ function doRegister(){
   }).then(function(){
     // Log registration attempt
     writeAuditLog("register","New registration pending approval: "+fn+" "+ln+" ("+email+") for "+branch+" as "+role,"system",null,"all");
+    sendRegistrationEmail(fn, ln, email, BRANCHES[branch]?BRANCHES[branch].name:branch, role);
     auth.signOut();
-    sucEl.textContent="Registration submitted! The administrator will review and approve your account within 24 hours.";
+    sucEl.textContent="Registration submitted! The IT Administrator will review your account. You will receive an email once approved.";
     sucEl.style.display="flex";
     ["rFn","rLn","rEmail","rPass"].forEach(function(id){document.getElementById(id).value="";});
     document.getElementById("rBranch").value="";document.getElementById("rRole").value="";
@@ -627,8 +693,50 @@ function loadUserProfile(user){
   }
 }
 
+function sendEmail(templateId, params){
+  if(!emailjsReady) return;
+  emailjs.send(EMAILJS_SERVICE_ID, templateId, params).catch(function(e){
+    console.log("Email send failed:", e);
+  });
+}
+
+function sendRegistrationEmail(firstName, lastName, email, branch, role){
+  sendEmail(EMAILJS_TEMPLATE_REGISTRATION, {
+    to_email: SUPER_ADMIN_EMAIL,
+    to_name: "Khathu",
+    applicant_name: firstName + " " + lastName,
+    applicant_email: email,
+    applicant_branch: branch,
+    applicant_role: role,
+    login_url: LOGIN_URL,
+    reply_to: email
+  });
+}
+
+function sendApprovalEmail(userEmail, userName, branch){
+  sendEmail(EMAILJS_TEMPLATE_APPROVED, {
+    to_email: userEmail,
+    to_name: userName,
+    branch_name: branch,
+    login_url: LOGIN_URL,
+    reply_to: SUPER_ADMIN_EMAIL
+  });
+}
+
+function sendRejectionEmail(userEmail, userName){
+  sendEmail(EMAILJS_TEMPLATE_APPROVED, {
+    to_email: userEmail,
+    to_name: userName,
+    branch_name: "N/A",
+    login_url: LOGIN_URL,
+    reply_to: SUPER_ADMIN_EMAIL,
+    status: "rejected"
+  });
+}
+
 function initApp(){
   loginAttempts=0;
+  initEmailJS();
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("registerScreen").style.display="none";
   document.getElementById("forgotScreen").style.display="none";
@@ -639,8 +747,7 @@ function initApp(){
   startSessionTimer();
   writeAuditLog("login","User signed in successfully",currentProfile.email,currentProfile.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
   navigateTo("dashboard");
-  // Mobile menu button
-  if(window.innerWidth<=900) document.getElementById("mobMenuBtn").style.display="block";
+  // Mobile handled by CSS
 }
 
 // ===== SESSION MANAGEMENT =====
@@ -1162,22 +1269,25 @@ function renderUsers(){
   document.getElementById("pageContent").innerHTML=html;
 }
 function approveUser(uid,name){
+  var u=allUsers.find(function(x){return x.uid===uid;});
   db.collection("users").doc(uid).update({status:"approved",approvedBy:currentUser.email,approvedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
     writeAuditLog("approve","User approved: "+name+" (UID: "+uid+")",currentProfile.email,"admin","all");
+    if(u) sendApprovalEmail(u.email,(u.firstName||"")+" "+(u.lastName||""),BRANCHES[u.branch]?BRANCHES[u.branch].name:u.branch);
   });
 }
 function rejectUser(uid){
   if(!confirm("Reject and permanently delete this registration?"))return;
-  var u=allUsers.find(function(x){return x.uid===uid;});
+  var u2=allUsers.find(function(x){return x.uid===uid;});
   db.collection("users").doc(uid).delete().then(function(){
-    writeAuditLog("reject","User registration rejected and deleted: "+(u?u.email:"unknown"),currentProfile.email,"admin","all");
+    writeAuditLog("reject","User registration rejected and deleted: "+(u2?u2.email:"unknown"),currentProfile.email,"admin","all");
+    if(u2) sendRejectionEmail(u2.email,(u2.firstName||"")+" "+(u2.lastName||""));
   });
 }
 
 // MOBILE
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open");document.getElementById("mobOverlay").style.display=document.getElementById("sidebar").classList.contains("mob-open")?"block":"none";}
 function closeMobileMenu(){document.getElementById("sidebar").classList.remove("mob-open");document.getElementById("mobOverlay").style.display="none";}
-window.addEventListener("resize",function(){if(window.innerWidth>900){document.getElementById("mobMenuBtn").style.display="none";closeMobileMenu();}else{document.getElementById("mobMenuBtn").style.display="block";}});
+window.addEventListener("resize",function(){if(window.innerWidth>900){closeMobileMenu();}});
 </script>
 </body>
 </html>
