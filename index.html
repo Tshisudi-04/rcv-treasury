@@ -9,7 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root{
   --navy:#0f2456;--navy2:#1a3570;--navy3:#243f85;
@@ -548,9 +548,12 @@ var EMAILJS_TEMPLATE_PENDING = "template_9zdki9g";
 var LOGIN_URL = "https://tshisudi-04.github.io/rcv-treasury";
 var emailjsReady = false;
 function initEmailJS(){
-  if(EMAILJS_PUBLIC_KEY==="YOUR_EMAILJS_PUBLIC_KEY") return;
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-  emailjsReady = true;
+  try{
+    if(EMAILJS_PUBLIC_KEY==="YOUR_EMAILJS_PUBLIC_KEY") return;
+    if(typeof emailjs==="undefined") return;
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    emailjsReady = true;
+  } catch(e){ console.log("EmailJS init failed:", e); }
 }
 initEmailJS(); // Init immediately so emails work at registration before login
 var HEAD_TREASURER_EMAIL="madzhiek@gmail.com";
@@ -697,10 +700,12 @@ function loadUserProfile(user){
 }
 
 function sendEmail(templateId, params){
-  if(!emailjsReady) return;
-  emailjs.send(EMAILJS_SERVICE_ID, templateId, params).catch(function(e){
-    console.log("Email send failed:", e);
-  });
+  try{
+    if(!emailjsReady||typeof emailjs==="undefined") return;
+    emailjs.send(EMAILJS_SERVICE_ID, templateId, params).catch(function(e){
+      console.log("Email send failed:", e);
+    });
+  } catch(e){ console.log("sendEmail error:", e); }
 }
 
 function sendRegistrationEmail(firstName, lastName, email, branch, role){
