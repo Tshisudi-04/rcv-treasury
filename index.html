@@ -722,8 +722,16 @@ function sendRegistrationEmail(firstName, lastName, email, branch, role){
   });
 }
 
-function sendApplicantPendingEmail(userEmail,firstName,lastName,branch,role){
-  sendEmail(EMAILJS_TEMPLATE_PENDING,{to_email:userEmail,to_name:firstName+" "+lastName,applicant_name:firstName+" "+lastName,branch_name:branch,applicant_role:role,login_url:LOGIN_URL,reply_to:SUPER_ADMIN_EMAIL});
+function sendApplicantPendingEmail(userEmail, firstName, lastName, branch, role) {
+  const templateParams = {
+    to_email: userEmail,
+    to_name: firstName + " " + lastName,
+    applicant_name: firstName + " " + lastName,
+    applicant_branch: branch,
+    applicant_role: role,
+    login_url: LOGIN_URL,
+    reply_to: SUPER_ADMIN_EMAIL
+  };
 }
 
 function sendApprovalEmail(userEmail, userName, branch){
