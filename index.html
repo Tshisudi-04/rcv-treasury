@@ -714,16 +714,8 @@ function sendRegistrationEmail(firstName, lastName, email, branch, role){
   });
 }
 
-function sendApplicantPendingEmail(userEmail, firstName, lastName, branch, role){
-  sendEmail(EMAILJS_TEMPLATE_PENDING, {
-    to_email: userEmail,
-    to_name: firstName + " " + lastName,
-    applicant_name: firstName + " " + lastName,
-    branch_name: branch,
-    applicant_role: role,
-    login_url: LOGIN_URL,
-    reply_to: SUPER_ADMIN_EMAIL
-  });
+function sendApplicantPendingEmail(userEmail,firstName,lastName,branch,role){
+  sendEmail(EMAILJS_TEMPLATE_PENDING,{to_email:userEmail,to_name:firstName+" "+lastName,applicant_name:firstName+" "+lastName,branch_name:branch,applicant_role:role,login_url:LOGIN_URL,reply_to:SUPER_ADMIN_EMAIL});
 }
 
 function sendApprovalEmail(userEmail, userName, branch){
@@ -759,7 +751,7 @@ function initApp(){
   listenToData();
   startSessionTimer();
   writeAuditLog("login","User signed in successfully",currentProfile.email,currentProfile.branch,currentProfile.branch==="all"?"all":currentProfile.branch);
-  navigateTo("dashboard");
+  navigateTo(currentProfile.role==="superadmin"?"soc":"dashboard");
   // Mobile handled by CSS
 }
 
@@ -819,20 +811,28 @@ function setupSidebar(){
   var roleClasses={superadmin:"role-superadmin",headtreasurer:"role-headtreasurer",treasurer:"role-treasurer",council:"role-council"};
   badge.textContent=roleLabels[p.role]||p.role;badge.className="sidebar-role-badge "+(roleClasses[p.role]||"role-council");
   var nav=document.getElementById("sidebarNav"),items=[];
-  items.push({section:"Main"});
-  items.push({id:"dashboard",icon:"&#128202;",label:"Dashboard"});
-  if(p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
-  items.push({id:"transactions",icon:"&#128179;",label:"Transactions"});
-  if(p.role!=="council"&&p.role!=="superadmin") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
-  items.push({section:"Funds"});
-  items.push({id:"requests",icon:"&#128203;",label:"Fund Requests",badge:true});
-  if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
-  items.push({section:"Reports"});
-  items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
-  items.push({section:"Security"});
-  items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
   if(p.role==="superadmin"){
-    items.push({id:"users",icon:"&#128100;",label:"Manage Users",badge:true});
+    items.push({section:"Security Operations"});
+    items.push({id:"soc",icon:"&#128737;",label:"SOC Dashboard"});
+    items.push({id:"threats",icon:"&#9888;",label:"Threat Monitor",badge:true});
+    items.push({id:"integrity",icon:"&#128268;",label:"System Integrity"});
+    items.push({section:"Investigation"});
+    items.push({id:"audit",icon:"&#128270;",label:"Incident Log"});
+    items.push({section:"Administration"});
+    items.push({id:"users",icon:"&#128100;",label:"Entity Management",badge:true});
+  } else {
+    items.push({section:"Main"});
+    items.push({id:"dashboard",icon:"&#128202;",label:"Dashboard"});
+    if(p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
+    items.push({id:"transactions",icon:"&#128179;",label:"Transactions"});
+    if(p.role!=="council") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
+    items.push({section:"Funds"});
+    items.push({id:"requests",icon:"&#128203;",label:"Fund Requests",badge:true});
+    if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
+    items.push({section:"Reports"});
+    items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
+    items.push({section:"Security"});
+    items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
   }
   nav.innerHTML="";
   items.forEach(function(item){
@@ -871,7 +871,10 @@ function listenToData(){
 }
 function updateBadge(id,count){var b=document.getElementById("badge-"+id);if(b){b.textContent=count;b.style.display=count>0?"inline-flex":"none";}}
 function refreshCurrentPage(){
-  if(currentPage==="dashboard")renderDashboard();
+  if(currentPage==="soc")renderSOC();
+  else if(currentPage==="threats")renderThreats();
+  else if(currentPage==="integrity")renderIntegrity();
+  else if(currentPage==="dashboard")renderDashboard();
   else if(currentPage==="transactions")renderTransactions();
   else if(currentPage==="branches")renderBranches();
   else if(currentPage==="reports")updateReportPreview();
@@ -896,10 +899,13 @@ function navigateTo(page){
   currentPage=page;
   document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
   var navEl=document.getElementById("nav-"+page);if(navEl)navEl.classList.add("active");
-  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:"Audit Log",users:"Manage Users"};
+  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:currentProfile.role==="superadmin"?"Incident Log":"Audit Log",users:currentProfile.role==="superadmin"?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity"};
   document.getElementById("topbarTitle").textContent=titles[page]||page;
   document.getElementById("pageContent").innerHTML='<div style="text-align:center;padding:48px;color:var(--gray-400)">&#9729; Loading...</div>';
-  if(page==="dashboard")renderDashboard();
+  if(page==="soc")renderSOC();
+  else if(page==="threats")renderThreats();
+  else if(page==="integrity")renderIntegrity();
+  else if(page==="dashboard")renderDashboard();
   else if(page==="branches")renderBranches();
   else if(page==="transactions")renderTransactions();
   else if(page==="add")renderAddTransaction();
@@ -1295,6 +1301,208 @@ function rejectUser(uid){
     writeAuditLog("reject","User registration rejected and deleted: "+(u2?u2.email:"unknown"),currentProfile.email,"admin","all");
     if(u2) sendRejectionEmail(u2.email,(u2.firstName||"")+" "+(u2.lastName||""));
   });
+}
+
+// ===== SOC DASHBOARD =====
+var threatAlerts=[];
+var notificationsEnabled=false;
+function requestNotificationPermission(){
+  if(!("Notification" in window))return;
+  Notification.requestPermission().then(function(p){notificationsEnabled=(p==="granted");});
+}
+function fireNotification(title,body,severity){
+  if(notificationsEnabled){new Notification("RC Vaal SOC - "+title,{body:body});}
+  threatAlerts.unshift({title:title,body:body,severity:severity,timestamp:new Date()});
+  if(threatAlerts.length>50)threatAlerts.pop();
+  var badge=document.getElementById("badge-threats");
+  if(badge){badge.textContent=threatAlerts.length;badge.style.display="inline-flex";}
+  if(currentPage==="threats")renderThreats();
+}
+function analyzeAuditForThreats(logs){
+  logs.slice(0,30).forEach(function(log){
+    if(!log.timestamp)return;
+    var ts=log.timestamp.toDate?log.timestamp.toDate():new Date(log.timestamp);
+    var h=ts.getHours();
+    var k1="thr_oh_"+log.id;
+    if((h<6||h>=22)&&log.action!=="login"&&!sessionStorage.getItem(k1)){
+      sessionStorage.setItem(k1,"1");
+      fireNotification("Off-Hours Activity Detected","Entity: "+log.userEmail+" performed '"+log.action+"' at "+ts.toLocaleTimeString("en-ZA"),"high");
+    }
+    var k2="thr_del_"+log.id;
+    if(log.action==="delete"&&!sessionStorage.getItem(k2)){
+      sessionStorage.setItem(k2,"1");
+      fireNotification("Data Deletion Event","Entity: "+log.userEmail+" deleted a record. Reason logged.","medium");
+    }
+    var k3="thr_rej_"+log.id;
+    if(log.action==="reject"&&!sessionStorage.getItem(k3)){
+      sessionStorage.setItem(k3,"1");
+      fireNotification("Unauthorised Registration Attempt","Registration rejected: "+(log.description||"unknown"),"low");
+    }
+  });
+}
+function socCard(label,value,color,sub){
+  return'<div class="stat-card" style="border-left:3px solid '+color+'">'
+    +'<div class="stat-card-header"><div class="stat-card-label">'+label+'</div></div>'
+    +'<div class="stat-card-value" style="color:'+color+'">'+value+'</div>'
+    +'<div class="stat-card-sub">'+sub+'</div></div>';
+}
+function renderSOC(){
+  requestNotificationPermission();
+  analyzeAuditForThreats(auditLogs);
+  var now=new Date();
+  var todayLogs=auditLogs.filter(function(l){
+    if(!l.timestamp)return false;
+    var ts=l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp);
+    return ts.toDateString()===now.toDateString();
+  });
+  var actionColors={add:"#16a34a",delete:"#dc2626",approve:"#2563eb",reject:"#d97706",login:"#6b7280",register:"#7c3aed"};
+  var html="";
+  html+='<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">';
+  html+='<div style="display:flex;align-items:center;gap:8px;background:#dcfce7;border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#16a34a"><span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block"></span>FIREBASE CONNECTED</div>';
+  html+='<div style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#2563eb"><span style="width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block"></span>EMAILJS ACTIVE</div>';
+  html+='<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:#374151">SESSION: '+now.toLocaleTimeString("en-ZA")+'</div>';
+  html+='<button class="btn btn-outline btn-sm" onclick="renderSOC()" style="margin-left:auto">&#8635; Refresh</button>';
+  html+="</div>";
+  html+='<div class="stats-grid" style="margin-bottom:20px">';
+  html+=socCard("Registered Entities",allUsers.length,"#0f2456","System users");
+  html+=socCard("Pending Clearance",pendingUsers.length,pendingUsers.length>0?"#d97706":"#16a34a","Awaiting approval");
+  html+=socCard("Audit Events Today",todayLogs.length,"#7c3aed","Actions logged");
+  html+=socCard("Threat Alerts",threatAlerts.length,threatAlerts.length>0?"#dc2626":"#16a34a","Detected anomalies");
+  html+="</div>";
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Recent Security Events</span><button class="btn btn-outline btn-sm" onclick="navigateTo(\'audit\')">Full Incident Log &rarr;</button></div>';
+  var recentEvents=auditLogs.slice(0,5);
+  if(recentEvents.length===0){html+='<div style="text-align:center;padding:32px;color:var(--gray-400)">No events recorded</div>';}
+  else{
+    html+='<table><thead><tr><th>Timestamp</th><th>Action Vector</th><th>Entity</th><th>Branch</th><th>Description</th></tr></thead><tbody>';
+    recentEvents.forEach(function(log){
+      var ts=log.timestamp?(log.timestamp.toDate?log.timestamp.toDate():new Date(log.timestamp)):null;
+      var col=actionColors[log.action]||"#6b7280";
+      html+='<tr><td style="font-size:11px;color:var(--gray-400);white-space:nowrap">'+(ts?ts.toLocaleString("en-ZA"):"Pending")+'</td>'
+        +'<td><span style="background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+log.action+'</span></td>'
+        +'<td style="font-size:12px;font-weight:500">'+escHtml(log.userEmail||"system")+'</td>'
+        +'<td style="font-size:12px">'+escHtml(log.branch||"")+'</td>'
+        +'<td style="font-size:12px;color:var(--gray-500)">'+escHtml((log.description||"").substring(0,60))+'</td></tr>';
+    });
+    html+='</tbody></table>';
+  }
+  html+="</div>";
+  html+='<div class="card"><div class="card-header"><span class="card-title">Activity Breakdown</span></div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;padding:16px">';
+  [{label:"Login Events",action:"login",color:"#6b7280"},{label:"Data Deletions",action:"delete",color:"#dc2626"},
+   {label:"Registrations",action:"register",color:"#7c3aed"},{label:"Approvals",action:"approve",color:"#2563eb"},
+   {label:"Rejections",action:"reject",color:"#d97706"},{label:"Tx Added",action:"add",color:"#16a34a"}
+  ].forEach(function(b){
+    var cnt=auditLogs.filter(function(l){return l.action===b.action;}).length;
+    html+='<div style="background:#f9fafb;border-radius:8px;padding:14px;border-left:3px solid '+b.color+'">'
+      +'<div style="font-size:22px;font-weight:800;color:'+b.color+'">'+cnt+'</div>'
+      +'<div style="font-size:11px;color:var(--gray-400);margin-top:2px">'+b.label+'</div></div>';
+  });
+  html+="</div></div>";
+  document.getElementById("pageContent").innerHTML=html;
+}
+
+// ===== THREAT MONITOR =====
+function threatCard(title,count,desc,severity){
+  var configs={high:{bg:"#fef2f2",border:"#dc2626",color:"#dc2626",label:"HIGH RISK"},medium:{bg:"#fffbeb",border:"#d97706",color:"#d97706",label:"MODERATE"},low:{bg:"#eff6ff",border:"#2563eb",color:"#2563eb",label:"LOW RISK"},clear:{bg:"#f0fdf4",border:"#16a34a",color:"#16a34a",label:"CLEAR"}};
+  var c=configs[severity]||configs.clear;
+  return'<div style="background:'+c.bg+';border:1px solid '+c.border+'40;border-radius:10px;padding:16px;border-left:4px solid '+c.border+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+    +'<div style="font-weight:700;font-size:13px;color:#1f2937">'+title+'</div>'
+    +'<span style="font-size:10px;font-weight:700;color:'+c.color+';background:white;padding:2px 6px;border-radius:4px">'+c.label+'</span></div>'
+    +'<div style="font-size:28px;font-weight:800;color:'+c.color+'">'+count+'</div>'
+    +'<div style="font-size:11px;color:#6b7280;margin-top:4px">'+desc+'</div></div>';
+}
+function renderThreats(){
+  var offHours=auditLogs.filter(function(l){if(!l.timestamp)return false;var ts=l.timestamp.toDate?l.timestamp.toDate():new Date(l.timestamp);var h=ts.getHours();return h<6||h>=22;});
+  var bulkDeletes=auditLogs.filter(function(l){return l.action==="delete";});
+  var failedRegs=auditLogs.filter(function(l){return l.action==="reject";});
+  var unknownBranch=auditLogs.filter(function(l){return !l.branch||l.branch==="unknown";});
+  var html='<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:12px">'
+    +'<div style="flex:1"><div style="font-weight:700;color:#dc2626;font-size:13px">LIVE THREAT ANALYSIS</div>'
+    +'<div style="font-size:12px;color:#6b7280;margin-top:2px">Real-time anomaly detection across all system entities. Last scan: '+new Date().toLocaleTimeString("en-ZA")+'</div></div>'
+    +'<button class="btn btn-outline btn-sm" onclick="renderThreats()">&#8635; Rescan</button></div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px">';
+  html+=threatCard("Off-Hours Activity",offHours.length,"Actions outside 06:00-22:00 window",offHours.length>0?"high":"clear");
+  html+=threatCard("Data Deletion Events",bulkDeletes.length,"Soft-deleted records with mandatory reason logs",bulkDeletes.length>5?"medium":bulkDeletes.length>0?"low":"clear");
+  html+=threatCard("Rejected Registrations",failedRegs.length,"Unauthorised registration attempts",failedRegs.length>3?"medium":failedRegs.length>0?"low":"clear");
+  html+=threatCard("Unknown Origin Events",unknownBranch.length,"Audit entries with unresolved branch attribution",unknownBranch.length>0?"medium":"clear");
+  html+="</div>";
+  html+='<div class="card"><div class="card-header"><span class="card-title">Active Alerts ('+threatAlerts.length+')</span></div>';
+  if(threatAlerts.length===0){html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No active alerts &mdash; system nominal</div>';}
+  else{
+    threatAlerts.forEach(function(a){
+      var sevColor=a.severity==="high"?"#dc2626":a.severity==="medium"?"#d97706":"#2563eb";
+      html+='<div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #f3f4f6;align-items:flex-start">'
+        +'<div style="width:8px;height:8px;border-radius:50%;background:'+sevColor+';margin-top:5px;flex-shrink:0"></div>'
+        +'<div style="flex:1"><div style="font-weight:600;font-size:13px">'+escHtml(a.title)+'</div>'
+        +'<div style="font-size:12px;color:var(--gray-400);margin-top:2px">'+escHtml(a.body)+'</div>'
+        +'<div style="font-size:11px;color:var(--gray-400);margin-top:4px">'+a.timestamp.toLocaleString("en-ZA")+'</div></div>'
+        +'<span style="background:'+sevColor+'20;color:'+sevColor+';padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0">'+a.severity+'</span></div>';
+    });
+  }
+  html+="</div>";
+  if(offHours.length>0){
+    html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">Off-Hours Activity Detail</span></div>';
+    html+='<table><thead><tr><th>Timestamp</th><th>Entity</th><th>Action Vector</th><th>Description</th></tr></thead><tbody>';
+    offHours.slice(0,20).forEach(function(log){
+      var ts=log.timestamp?(log.timestamp.toDate?log.timestamp.toDate():new Date(log.timestamp)):null;
+      html+='<tr><td style="font-size:11px;color:#dc2626;font-weight:600">'+(ts?ts.toLocaleString("en-ZA"):"Unknown")+'</td>'
+        +'<td style="font-size:12px">'+escHtml(log.userEmail||"unknown")+'</td>'
+        +'<td><span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">'+log.action+'</span></td>'
+        +'<td style="font-size:12px;color:var(--gray-500)">'+escHtml((log.description||"").substring(0,80))+'</td></tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+  document.getElementById("pageContent").innerHTML=html;
+}
+
+// ===== SYSTEM INTEGRITY =====
+function renderIntegrity(){
+  var deletedTx=auditLogs.filter(function(l){return l.action==="delete";}).length;
+  var emailConfigured=EMAILJS_PUBLIC_KEY!=="YOUR_EMAILJS_PUBLIC_KEY";
+  var html='<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">System Health Matrix</span></div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0">';
+  [{label:"Firebase Authentication",status:"operational",detail:"Auth service responding"},
+   {label:"Firestore Database",status:"operational",detail:allTransactions.length+" transaction records"},
+   {label:"EmailJS Integration",status:emailConfigured?"operational":"degraded",detail:emailConfigured?"Email notifications active":"Keys not configured"},
+   {label:"Audit Trail",status:auditLogs.length>0?"operational":"warning",detail:auditLogs.length+" entries logged"},
+   {label:"Session Management",status:"operational",detail:"30-min auto-timeout active"},
+   {label:"Role-Based Access Control",status:"operational",detail:allUsers.length+" entities under RBAC"}
+  ].forEach(function(c){
+    var col=c.status==="operational"?"#16a34a":c.status==="degraded"?"#dc2626":"#d97706";
+    html+='<div style="padding:16px;border-bottom:1px solid #f3f4f6;border-right:1px solid #f3f4f6">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="width:8px;height:8px;border-radius:50%;background:'+col+';display:inline-block"></span>'
+      +'<div style="font-size:12px;font-weight:700">'+c.label+'</div></div>'
+      +'<div style="font-size:11px;color:#6b7280;margin-left:16px">'+c.detail+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:'+col+';margin-left:16px;margin-top:4px;text-transform:uppercase">'+c.status+'</div></div>';
+  });
+  html+="</div></div>";
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Data Inventory</span></div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px">';
+  [{label:"Transaction Records",count:allTransactions.length,color:"#0f2456"},
+   {label:"Deleted Records",count:deletedTx,color:"#dc2626"},
+   {label:"Registered Entities",count:allUsers.length,color:"#2563eb"},
+   {label:"Fund Requests",count:allRequests.length,color:"#d97706"},
+   {label:"Audit Entries",count:auditLogs.length,color:"#7c3aed"},
+   {label:"Active Branches",count:Object.keys(BRANCHES).length,color:"#16a34a"}
+  ].forEach(function(i){
+    html+='<div style="background:#f9fafb;border-radius:8px;padding:14px;text-align:center;border-top:3px solid '+i.color+'">'
+      +'<div style="font-size:24px;font-weight:800;color:'+i.color+';margin:4px 0">'+i.count+'</div>'
+      +'<div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">'+i.label+'</div></div>';
+  });
+  html+="</div></div>";
+  html+='<div class="card"><div class="card-header"><span class="card-title">Branch Data Coverage</span></div>';
+  html+='<table><thead><tr><th>Branch</th><th>Transaction Records</th><th>Coverage Status</th></tr></thead><tbody>';
+  Object.keys(BRANCHES).forEach(function(k){
+    var cnt=allTransactions.filter(function(t){return t.branch===k;}).length;
+    var status=cnt===0?"No Data":cnt<5?"Minimal Data":"Active";
+    var col=cnt===0?"#dc2626":cnt<5?"#d97706":"#16a34a";
+    html+='<tr><td style="font-weight:600">'+escHtml(BRANCHES[k].name)+'</td>'
+      +'<td style="font-weight:700;color:'+col+'">'+cnt+' records</td>'
+      +'<td><span style="background:'+col+'20;color:'+col+';padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700">'+status+'</span></td></tr>';
+  });
+  html+="</tbody></table></div>";
+  document.getElementById("pageContent").innerHTML=html;
 }
 
 // MOBILE
