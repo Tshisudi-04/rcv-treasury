@@ -1288,7 +1288,7 @@ function renderUsers(){
   if(active.length>0){
     html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px">&#10003; Active Users ('+active.length+')</div><div class="card">';
     active.forEach(function(u){
-      html+='<div class="user-row"><div class="user-avatar" style="background:var(--navy)">'+( u.firstName||"?")[0].toUpperCase()+'</div><div class="user-info"><h4>'+escHtml(u.firstName+" "+u.lastName)+'</h4><p>'+escHtml(u.email)+' &middot; '+getBranchName(u.branch)+'</p></div><span class="badge badge-navy">'+u.role+'</span></div>';
+      html+='<div class="user-row"><div class="user-avatar" style="background:var(--navy)">'+( u.firstName||"?")[0].toUpperCase()+'</div><div class="user-info"><h4>'+escHtml(u.firstName+" "+u.lastName)+'</h4><p>'+escHtml(u.email)+' &middot; '+getBranchName(u.branch)+'</p></div><span class="badge badge-navy">'+u.role+'</span><button class="btn btn-red btn-sm" style="margin-left:8px" onclick="removeUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\',\''+u.email+'\')">&times; Remove</button></div>';
     });
     html+='</div>';
   }
@@ -1308,6 +1308,19 @@ function rejectUser(uid){
   db.collection("users").doc(uid).delete().then(function(){
     writeAuditLog("reject","User registration rejected and deleted: "+(u2?u2.email:"unknown"),currentProfile.email,"admin","all");
     if(u2) sendRejectionEmail(u2.email,(u2.firstName||"")+" "+(u2.lastName||""));
+  });
+}
+
+function removeUser(uid,name,email){
+  if(!confirm("Permanently remove "+name+" ("+email+") from the system? This cannot be undone."))return;
+  // Delete from Firestore users collection
+  db.collection("users").doc(uid).delete().then(function(){
+    writeAuditLog("delete","Entity removed by IT Admin: "+name+" ("+email+") UID: "+uid,currentProfile.email,"admin","all");
+    // Note: Firebase Auth account remains but they cannot log in without a Firestore profile
+    // For full Auth deletion, use Firebase Console -> Authentication
+    alert(name+" has been removed from the portal. To fully revoke Firebase login access, also delete their account in Firebase Console > Authentication.");
+  }).catch(function(e){
+    alert("Error removing user: "+e.message);
   });
 }
 
