@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
   --navy:#0f2456;--navy2:#1a3570;--navy3:#243f85;
@@ -551,6 +552,7 @@ function initEmailJS(){
   emailjs.init(EMAILJS_PUBLIC_KEY);
   emailjsReady = true;
 }
+initEmailJS(); // Init immediately so emails work at registration before login
 var HEAD_TREASURER_EMAIL="madzhiek@gmail.com";
 var TX_LOCK_DAYS=30; // transactions older than this cannot be deleted
 var SESSION_TIMEOUT=30*60; // 30 minutes in seconds
@@ -564,7 +566,7 @@ var FUND_CATEGORIES=["Catering - Congregational Conferences","Catering - Holy Co
 
 var db,auth,currentUser=null,currentProfile=null;
 var allTransactions=[],allRequests=[],allUsers=[],pendingUsers=[],auditLogs=[];
-var selectedType="income",reportType="month",currentPage="dashboard";
+var selectedType="income",reportType="month",currentPage="";
 var pendingTxData=null,pendingDeleteId=null;
 var loginAttempts=0,lockoutActive=false;
 var sessionTimer=SESSION_TIMEOUT,sessionInterval=null,sessionWarnShown=false;
@@ -899,7 +901,8 @@ function navigateTo(page){
   currentPage=page;
   document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
   var navEl=document.getElementById("nav-"+page);if(navEl)navEl.classList.add("active");
-  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:currentProfile.role==="superadmin"?"Incident Log":"Audit Log",users:currentProfile.role==="superadmin"?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity"};
+  var isAdmin=currentProfile&&currentProfile.role==="superadmin";
+  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:isAdmin?"Incident Log":"Audit Log",users:isAdmin?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity"};
   document.getElementById("topbarTitle").textContent=titles[page]||page;
   document.getElementById("pageContent").innerHTML='<div style="text-align:center;padding:48px;color:var(--gray-400)">&#9729; Loading...</div>';
   if(page==="soc")renderSOC();
