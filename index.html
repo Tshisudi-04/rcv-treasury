@@ -646,7 +646,8 @@ function doRegister(){
     // Log registration attempt
     writeAuditLog("register","New registration pending approval: "+fn+" "+ln+" ("+email+") for "+branch+" as "+role,"system",null,"all");
     sendApplicantPendingEmail(email, fn, ln, BRANCHES[branch]?BRANCHES[branch].name:branch, role);
-    auth.signOut();
+    // Delay signOut to allow EmailJS to complete the async send before session ends
+    setTimeout(function(){ auth.signOut(); }, 2000);
     sucEl.textContent="Registration submitted! The IT Administrator will review your account. You will receive an email once approved.";
     sucEl.style.display="flex";
     ["rFn","rLn","rEmail","rPass"].forEach(function(id){document.getElementById(id).value="";});
@@ -1523,7 +1524,100 @@ function renderIntegrity(){
       +'<td><span style="background:'+col+'20;color:'+col+';padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700">'+status+'</span></td></tr>';
   });
   html+="</tbody></table></div>";
+
+  // Backup Import Panel
+  html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">&#128229; Backup Data Import</span></div>'
+    +'<div style="padding:20px">'
+    +'<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'
+    +'<strong>&#9888; Use this only when restoring data from the Google Form backup.</strong> Each row in the CSV will be imported into Firebase as a transaction or fund request. Duplicates are detected automatically.'
+    +'</div>'
+    +'<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:6px">Select backup CSV file (downloaded from Google Sheets)</label>'
+    +'<input type="file" id="backupCsvInput" accept=".csv" style="font-size:13px"/></div>'
+    +'<button class="btn btn-navy" onclick="processBackupCSV()" style="margin-right:8px">&#8679; Import Records</button>'
+    +'<div id="importLog" style="margin-top:16px;font-size:12px;color:#374151"></div>'
+    +'</div></div>';
+
   document.getElementById("pageContent").innerHTML=html;
+}
+
+// ===== BACKUP CSV IMPORT =====
+function processBackupCSV(){
+  var fileInput=document.getElementById("backupCsvInput");
+  var logEl=document.getElementById("importLog");
+  if(!fileInput||!fileInput.files||!fileInput.files[0]){
+    logEl.innerHTML='<span style="color:#dc2626">Please select a CSV file first.</span>';return;
+  }
+  var file=fileInput.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var lines=e.target.result.split("
+").filter(function(l){return l.trim();});
+    if(lines.length<2){logEl.innerHTML='<span style="color:#dc2626">CSV appears empty or invalid.</span>';return;}
+    var headers=lines[0].split(",").map(function(h){return h.trim().replace(/^"|"$/g,"").toLowerCase();});
+    var rows=lines.slice(1);
+    var imported=0,skipped=0,errors=0;
+    var log='<div style="font-weight:700;margin-bottom:8px">Import Log:</div>';
+    var promises=rows.map(function(row){
+      var cols=row.match(/(".*?"|[^,]+)(?=,|$)/g)||row.split(",");
+      cols=cols.map(function(c){return(c||"").trim().replace(/^"|"$/g,"");});
+      var rec={};
+      headers.forEach(function(h,i){rec[h]=cols[i]||"";});
+
+      var submissionType=(rec["submission type"]||rec["type"]||"").toLowerCase();
+      var branch=Object.keys(BRANCHES).find(function(k){return BRANCHES[k].name.toLowerCase()===(rec["branch"]||"").toLowerCase();})||"main";
+      var submittedBy=rec["email address"]||rec["email"]||"backup-import";
+      var timestamp=firebase.firestore.FieldValue.serverTimestamp();
+
+      if(submissionType.indexOf("transaction")!==-1||submissionType.indexOf("income")!==-1||submissionType.indexOf("expense")!==-1){
+        var txType=(rec["transaction type"]||rec["income or expense"]||"").toLowerCase().indexOf("income")!==-1?"income":"expense";
+        var amount=parseFloat((rec["amount"]||"0").replace(/[^0-9.]/g,""))||0;
+        var date=rec["date"]||new Date().toISOString().split("T")[0];
+        var desc=rec["description"]||rec["details"]||"Backup import";
+        // Duplicate check
+        var isDup=allTransactions.some(function(t){
+          return Math.abs(t.amount-amount)<0.01&&t.description===desc&&t.date===date;
+        });
+        if(isDup){skipped++;log+='<div style="color:#d97706">&#9888; Skipped (duplicate): '+escHtml(desc)+'</div>';return Promise.resolve();}
+        return db.collection("transactions").add({
+          type:txType,amount:amount,date:date,description:desc,
+          branch:branch,addedBy:submittedBy+"(backup)",
+          fund:rec["fund category"]||"other",
+          importedFromBackup:true,createdAt:timestamp
+        }).then(function(){
+          imported++;
+          writeAuditLog("add","Backup import — transaction: "+desc+" ("+amount+")",currentProfile.email,branch,"all");
+          log+='<div style="color:#16a34a">&#10003; Imported transaction: '+escHtml(desc)+'</div>';
+        }).catch(function(){errors++;log+='<div style="color:#dc2626">&#10007; Error importing: '+escHtml(desc)+'</div>';});
+      } else if(submissionType.indexOf("fund")!==-1||submissionType.indexOf("request")!==-1){
+        var purpose=rec["purpose"]||rec["purpose of funds"]||"Backup import";
+        var reqAmount=parseFloat((rec["amount"]||"0").replace(/[^0-9.]/g,""))||0;
+        var eventDate=rec["event date"]||rec["date"]||"";
+        return db.collection("fundRequests").add({
+          type:"Request funds",branch:branch,purpose:purpose,
+          amount:reqAmount,eventDate:eventDate,
+          recipient:rec["recipient name"]||rec["recipient"]||"",
+          accountNumber:rec["account number"]||"",
+          bank:rec["bank"]||"",branchCode:rec["branch code"]||"",
+          kms:parseFloat(rec["kms travelled"]||"0")||0,
+          submittedBy:submittedBy,status:"pending",
+          importedFromBackup:true,createdAt:timestamp
+        }).then(function(){
+          imported++;
+          writeAuditLog("add","Backup import — fund request: "+purpose,currentProfile.email,branch,"all");
+          log+='<div style="color:#16a34a">&#10003; Imported fund request: '+escHtml(purpose)+'</div>';
+        }).catch(function(){errors++;log+='<div style="color:#dc2626">&#10007; Error importing fund request: '+escHtml(purpose)+'</div>';});
+      } else {
+        skipped++;
+        log+='<div style="color:#9ca3af">&#8212; Skipped unrecognised row type: '+escHtml(submissionType)+'</div>';
+        return Promise.resolve();
+      }
+    });
+    Promise.all(promises).then(function(){
+      log+='<div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:6px;font-weight:700;color:#16a34a">Done &mdash; Imported: '+imported+' &nbsp;|&nbsp; Skipped: '+skipped+' &nbsp;|&nbsp; Errors: '+errors+'</div>';
+      logEl.innerHTML=log;
+    });
+  };
+  reader.readAsText(file);
 }
 
 // MOBILE
