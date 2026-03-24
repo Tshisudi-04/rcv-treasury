@@ -732,6 +732,9 @@ function sendApplicantPendingEmail(userEmail, firstName, lastName, branch, role)
     login_url: LOGIN_URL,
     reply_to: SUPER_ADMIN_EMAIL
   };
+  
+  // FIXED: Added this call - use your pending template ID
+  sendEmail(EMAILJS_TEMPLATE_PENDING, templateParams);
 }
 
 function sendApprovalEmail(userEmail, userName, branch){
@@ -745,7 +748,7 @@ function sendApprovalEmail(userEmail, userName, branch){
 }
 
 function sendRejectionEmail(userEmail, userName){
-  sendEmail(EMAILJS_TEMPLATE_APPROVED, {
+  sendEmail(EMAILJS_TEMPLATE_APPROVED, {  // Consider EMAILJS_TEMPLATE_REJECTED?
     to_email: userEmail,
     to_name: userName,
     branch_name: "N/A",
