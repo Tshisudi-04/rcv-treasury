@@ -1550,8 +1550,7 @@ function processBackupCSV(){
   var file=fileInput.files[0];
   var reader=new FileReader();
   reader.onload=function(e){
-    var lines=e.target.result.split("
-").filter(function(l){return l.trim();});
+    var lines=e.target.result.split("\n").filter(function(l){return l.trim();});
     if(lines.length<2){logEl.innerHTML='<span style="color:#dc2626">CSV appears empty or invalid.</span>';return;}
     var headers=lines[0].split(",").map(function(h){return h.trim().replace(/^"|"$/g,"").toLowerCase();});
     var rows=lines.slice(1);
