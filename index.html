@@ -3,16 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script>
-        function doLogin() {
-            // Your login logic here
-            alert('Logging in...');
-        }
-    </script>
+    <title>RC Vaal — Treasury Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Welcome to RCV Treasury</h1>
-    <button onclick="doLogin()">Login</button>
+    <!-- Session Warning -->
+    <div class="session-warning" id="sessionWarning">
+        ⚠️ Your session expires in <span id="sessionCountdown" class="session-timer">5:00</span> due to inactivity.
+        <button onclick="resetSession()">Stay Signed In</button>
+    </div>
+
+    <!-- Duplicate Warning Modal -->
+    <div class="modal-overlay" id="dupModal">
+        <div class="modal">
+            <h3>⚠️ Possible Duplicate Transaction</h3>
+            <p id="dupModalMsg">A transaction with the same amount, date and description already exists. Are you sure you want to continue?</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeDupModal()">Cancel</button>
+                <button class="btn btn-navy" onclick="confirmSaveTx()">Save Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Reason Modal -->
+    <div class="modal-overlay" id="delModal">
+        <div class="modal">
+            <h3>🗑️ Delete Transaction</h3>
+            <p>Please provide a reason for deleting this transaction. This action will be recorded in the audit log.</p>
+            <div class="fg">
+                <label>Reason for deletion *</label>
+                <textarea id="delReason" placeholder="e.g. Entered incorrect amount, duplicate entry..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeDelModal()">Cancel</button>
+                <button class="btn btn-red" onclick="confirmDelete()">Delete Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="auth-screen">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <img class="auth-brand-logo" src="https://via.placeholder.com/48" alt="RC Vaal Logo">
+                <div class="auth-brand-name">RC Vaal Treasury<span>Secure Portal</span></div>
+            </div>
+            <div class="auth-left-body">
+                <h2>Manage Church Finances With Confidence</h2>
+                <p>A secure, multi-branch treasury management system for Reformed Church Vaal congregations.</p>
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">🔒</div>
+                        <div class="auth-feature-text">Bank-grade security with full audit trails</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">📊</div>
+                        <div class="auth-feature-text">Real-time financial tracking across all branches</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">📋</div>
+                        <div class="auth-feature-text">Fund request & claims portal built-in</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">🛡️</div>
+                        <div class="auth-feature-text">Fraud prevention & duplicate detection</div>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-left-foot">NPO 276-037 • Reformed Church Vaal • © 2026</div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-card">
+                <h1>Welcome Back</h1>
+                <p class="auth-sub">Sign in to your treasury account</p>
+                <div id="loginError" class="auth-error"></div>
+                <div id="loginLockout" class="lockout-badge" style="display:none;">🔒 Too many failed attempts. Please wait <span id="lockoutTimer">30</span> seconds before trying again.</div>
+                <div id="loginPending" class="pending-badge" style="display:none;">⏱️ Your account is pending approval. You will be notified once the administrator approves your registration.</div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="lEmail" placeholder="your@email.com" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="lPass" placeholder="••••••••">
+                </div>
+                <div class="forgot-link">
+                    <a onclick="showForgot()">Forgot password?</a>
+                </div>
+                <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In →</button>
+                <div class="auth-link">Don't have an account? <a onclick="showRegister()">Register your branch</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="auth-screen" style="display:none">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <img class="auth-brand-logo" src="https://via.placeholder.com/48" alt="RC Vaal Logo">
+                <div class="auth-brand-name">RC Vaal Treasury<span>Secure Portal</span></div>
+            </div>
+            <div class="auth-left-body">
+                <h2>Register Your Branch</h2>
+                <p>Create a treasury account for your fellowship centre. Your registration will be reviewed and approved by the RC Vaal system administrator before you can access the portal.</p>
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">①</div>
+                        <div class="auth-feature-text">Fill in your branch & personal details</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">②</div>
+                        <div class="auth-feature-text">Admin reviews your registration</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon">③</div>
+                        <div class="auth-feature-text">Get notified and start managing finances</div>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-left-foot">Only RC Vaal approved branches may register.</div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-card">
+                <h1>Branch Registration</h1>
+                <p class="auth-sub">Create your treasury account</p>
+                <div id="regError" class="auth-error"></div>
+                <div id="regSuccess" class="auth-success"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" id="rFn" placeholder="First name">
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="rLn" placeholder="Last name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="rEmail" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Password (min 8 characters)</label>
+                    <input type="password" id="rPass" placeholder="Min 8 characters">
+                </div>
+                <div class="form-group">
+                    <label>Branch / Fellowship Centre</label>
+                    <select id="rBranch">
+                        <option value="">-- Select your branch --</option>
+                        <option value="vut">VUT Fellowship Centre (Vanderbijlpark)</option>
+                        <option value="ufs">UFS Fellowship Centre (Bloemfontein)</option>
+                        <option value="pe">PE Fellowship Centre (Gqeberha)</option>
+                        <option value="secunda">Secunda Fellowship Centre</option>
+                        <option value="main">Main Congregation (Bedworth Park)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your Role</label>
+                    <select id="rRole">
+                        <option value="">-- Select your role --</option>
+                        <option value="treasurer">Branch Treasurer</option>
+                        <option value="council">Church Council / Pastor</option>
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="doRegister()">Submit Registration →</button>
+                <div class="auth-link">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Screen -->
+    <div id="forgotScreen" class="auth-screen" style="display:none">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <img class="auth-brand-logo" src="https://via.placeholder.com/48" alt="RC Vaal Logo">
+                <div class="auth-brand-name">RC Vaal Treasury<span>Secure Portal</span></div>
+            </div>
+            <div class="auth-left-body">
+                <h2>Reset Your Password</h2>
+                <p>Enter your email and we'll send you a secure password reset link. Check your inbox after submitting.</p>
+            </div>
+            <div class="auth-left-foot">NPO 276-037 • Reformed Church Vaal</div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-card">
+                <h1>Forgot Password?</h1>
+                <p class="auth-sub">Enter your email to receive a reset link — free of charge</p>
+                <div id="forgotError" class="auth-error"></div>
+                <div id="forgotSuccess" class="auth-success"></div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="fEmail" placeholder="your@email.com">
+                </div>
+                <button class="btn-primary" onclick="doForgot()">Send Reset Link →</button>
+                <div class="auth-link"><a onclick="showLogin()">← Back to Sign In</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="appScreen" style="display:none">
+        <div class="security-bar">
+            <div class="security-bar-left">
+                <div class="security-bar-item">🔒 <span>Secure Session</span></div>
+                <div class="security-bar-item">📋 <span>Audit Trail Active</span></div>
+                <div class="security-bar-item">🛡️ <span>Fraud Detection On</span></div>
+            </div>
+            <div class="security-bar-left">
+                <div class="security-bar-item">Session: <span id="secBarTimer">30:00</span></div>
+                <div class="security-bar-item">User: <span id="secBarUser">User</span></div>
+            </div>
+        </div>
+        <div class="app-layout">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-brand">
+                    <img class="sidebar-brand-logo" src="https://via.placeholder.com/38" alt="Logo">
+                    <div class="sidebar-brand-name">RC Vaal<span>Treasury v2.0</span></div>
+                </div>
+                <div class="sidebar-user">
+                    <div class="sidebar-user-role">ROLE</div>
+                    <div class="sidebar-user-name" id="sidebarUserName">User</div>
+                    <div class="sidebar-user-branch" id="sidebarUserBranch">Branch</div>
+                    <div class="sidebar-role-badge" id="sidebarRoleBadge">Treasurer</div>
+                </div>
+                <div class="sidebar-nav" id="sidebarNav">
+                    <div class="nav-section-label">Main</div>
+                    <a class="nav-item active" onclick="loadDashboard()">
+                        <div class="nav-item-icon">📊</div>
+                        <span>Dashboard</span>
+                    </a>
+                    <a class="nav-item" onclick="loadTransactions()">
+                        <div class="nav-item-icon">💰</div>
+                        <span>Transactions</span>
+                    </a>
+                    <a class="nav-item" onclick="loadRequests()">
+                        <div class="nav-item-icon">📝</div>
+                        <span>Fund Requests</span>
+                    </a>
+                    <div class="nav-section-label">Reports</div>
+                    <a class="nav-item" onclick="loadReports()">
+                        <div class="nav-item-icon">📈</div>
+                        <span>Financial Reports</span>
+                    </a>
+                    <div class="nav-section-label">Admin</div>
+                    <a class="nav-item" onclick="loadAdmin()">
+                        <div class="nav-item-icon">⚙️</div>
+                        <span>Admin Panel</span>
+                    </a>
+                </div>
+                <div class="sidebar-footer">
+                    <button class="signout-btn" onclick="doSignOut()">
+                        <span>🚪</span> Sign Out
+                    </button>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="topbar">
+                    <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+                    <div class="topbar-right">
+                        <div class="topbar-branch-badge" id="topbarBranch">Branch</div>
+                        <div class="sync-indicator">
+                            <div class="sync-dot" id="syncDot"></div>
+                            <span id="syncStatus">Synced</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-content" id="pageContent">
+                    <!-- Content loads here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/email.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/transactions.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
