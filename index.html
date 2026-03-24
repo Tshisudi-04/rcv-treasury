@@ -539,10 +539,11 @@ var SUPER_ADMIN_EMAIL="khathutshelotshisudi@gmail.com";
 //  EMAILJS CONFIG — Fill these in after EmailJS setup
 //  See setup instructions at bottom of this file
 // ============================================================
-var EMAILJS_PUBLIC_KEY = "YOUR_EMAILJS_PUBLIC_KEY";
-var EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
-var EMAILJS_TEMPLATE_REGISTRATION = "YOUR_TEMPLATE_ID_REGISTRATION";
-var EMAILJS_TEMPLATE_APPROVED = "YOUR_TEMPLATE_ID_APPROVED";
+var EMAILJS_PUBLIC_KEY = "jHyQw2LTTMljSJNQq";
+var EMAILJS_SERVICE_ID = "service_bincn3o";
+var EMAILJS_TEMPLATE_REGISTRATION = "template_9zdki9g";
+var EMAILJS_TEMPLATE_APPROVED = "template_zs1n0dp";
+var EMAILJS_TEMPLATE_PENDING = "template_9zdki9g";
 var LOGIN_URL = "https://tshisudi-04.github.io/rcv-treasury";
 var emailjsReady = false;
 function initEmailJS(){
@@ -639,7 +640,7 @@ function doRegister(){
   }).then(function(){
     // Log registration attempt
     writeAuditLog("register","New registration pending approval: "+fn+" "+ln+" ("+email+") for "+branch+" as "+role,"system",null,"all");
-    sendRegistrationEmail(fn, ln, email, BRANCHES[branch]?BRANCHES[branch].name:branch, role);
+    sendApplicantPendingEmail(email, fn, ln, BRANCHES[branch]?BRANCHES[branch].name:branch, role);
     auth.signOut();
     sucEl.textContent="Registration submitted! The IT Administrator will review your account. You will receive an email once approved.";
     sucEl.style.display="flex";
@@ -710,6 +711,18 @@ function sendRegistrationEmail(firstName, lastName, email, branch, role){
     applicant_role: role,
     login_url: LOGIN_URL,
     reply_to: email
+  });
+}
+
+function sendApplicantPendingEmail(userEmail, firstName, lastName, branch, role){
+  sendEmail(EMAILJS_TEMPLATE_PENDING, {
+    to_email: userEmail,
+    to_name: firstName + " " + lastName,
+    applicant_name: firstName + " " + lastName,
+    branch_name: branch,
+    applicant_role: role,
+    login_url: LOGIN_URL,
+    reply_to: SUPER_ADMIN_EMAIL
   });
 }
 
