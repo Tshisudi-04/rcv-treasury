@@ -840,7 +840,7 @@ function setupSidebar(){
     items.push({section:"Reports"});
     items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
     items.push({section:"Security"});
-    items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
+    if(p.role==="superadmin") items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
     items.push({section:"Settings"});
     items.push({id:"profile",icon:"&#128100;",label:"My Profile"});
   }
@@ -923,7 +923,7 @@ function navigateTo(page){
   else if(page==="requests")renderRequests();
   else if(page==="newrequest")renderNewRequest();
   else if(page==="reports")renderReports();
-  else if(page==="audit")renderAudit();
+  else if(page==="audit"){if(currentProfile.role==="superadmin")renderAudit();else navigateTo("dashboard");}
   else if(page==="users")renderUsers();
   else if(page==="profile")renderProfile();
   closeMobileMenu();
@@ -1020,7 +1020,7 @@ function renderTxRows(txs){
       if(locked) delBtn='<span class="lock-icon" title="Locked: transactions older than '+TX_LOCK_DAYS+' days cannot be deleted">&#128274;</span>';
       else delBtn='<button class="del-btn" onclick="requestDelete(\''+t.id+'\',\''+escHtml(t.description)+'\')">&#128465;</button>';
     }
-    var rcptIcon=t.receiptData?'<span title="Receipt attached" style="font-size:11px;margin-left:4px">&#128248;</span>':'';
+    var rcptIcon=t.receiptData?'<span title="Receipt attached — click to view" style="font-size:13px;margin-left:6px;cursor:pointer" onclick="viewReceipt(\''+t.id+'\')">📸</span>':'';
     return'<tr><td style="color:var(--gray-500);white-space:nowrap">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+rcptIcon+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td><td>'+delBtn+'</td></tr>';
   }).join("");
   return'<table><thead><tr><th>Date</th><th>Description</th><th>Branch</th><th>Type</th><th>Amount</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
@@ -1067,7 +1067,7 @@ function renderAddTransaction(){
     +'<div class="expense-extra" id="expExtra"><div class="form-section-title">Expense Details</div>'
     +'<div class="fg-row"><div class="fg"><label>What was purchased</label><input type="text" id="aItem" placeholder="e.g. Chairs, printer paper"/></div><div class="fg"><label>Where / Supplier</label><input type="text" id="aVendor" placeholder="e.g. Makro"/></div></div>'
     +'<div class="fg-row"><div class="fg"><label>Payment Method</label><select id="aPayment"><option value="">-- Select --</option><option>Cash</option><option>EFT</option><option>Card</option><option>Cheque</option></select></div><div class="fg"><label>Receipt / Ref No.</label><input type="text" id="aReceipt" placeholder="e.g. RCP-00123"/></div></div>'
-    +'<div class="fg"><label>Attach Receipt (optional)</label><input type="file" id="aReceiptFile" accept="image/*,application/pdf" style="font-size:13px;padding:6px 0"/><div style="font-size:11px;color:var(--gray-400);margin-top:4px">Photo or PDF. Stored securely in Firebase.</div></div></div>'
+    +'<div class="fg"><label>Attach Receipt (optional)</label><input type="file" id="aReceiptFile" accept="image/*,application/pdf" style="font-size:13px;padding:6px 0"/><div style="font-size:11px;color:var(--gray-400);margin-top:4px">Photo or PDF, max 800KB. Stored securely.</div></div></div>'
     +'<div class="alert alert-info" style="margin-bottom:16px">&#128274; All transactions are saved with a full audit trail. Transactions older than '+TX_LOCK_DAYS+' days are locked and cannot be deleted.</div>'
     +'<button class="btn btn-navy" style="width:100%;padding:13px;font-size:14px;justify-content:center" onclick="checkAndSaveTx()">Save Transaction &#8594;</button>'
     +'<div class="saving-ind" id="savingInd">&#9729; Saving to cloud...</div></div>';
@@ -1135,6 +1135,22 @@ function confirmSaveTx(){
     reader.readAsDataURL(receiptFile);
   } else {
     saveTxWithReceipt(null);
+  }
+}
+
+
+// ===== VIEW RECEIPT =====
+function viewReceipt(txId){
+  var tx=allTransactions.find(function(t){return t.id===txId;});
+  if(!tx||!tx.receiptData){alert("No receipt attached to this transaction.");return;}
+  var win=window.open("","_blank");
+  if(!win) return;
+  if(tx.receiptData.startsWith("data:image")){
+    win.document.write('<html><head><title>Receipt — '+escHtml(tx.description)+'</title></head><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+tx.receiptData+'" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
+  } else if(tx.receiptData.startsWith("data:application/pdf")){
+    win.document.write('<html><head><title>Receipt — '+escHtml(tx.description)+'</title></head><body style="margin:0"><embed src="'+tx.receiptData+'" width="100%" height="100%" type="application/pdf"/></body></html>');
+  } else {
+    win.document.write('<html><body><p>Cannot display this receipt format.</p></body></html>');
   }
 }
 
@@ -1223,13 +1239,21 @@ function submitRequest(){
 
 // ===== AUDIT LOG =====
 function renderAudit(){
-  var isAdmin=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
-  var logs=isAdmin?auditLogs:auditLogs.filter(function(l){return l.branch&&l.branch===currentProfile.branch;});
-  var html='<div class="card"><div class="card-header"><span class="card-title">&#128270; Audit Trail</span><span class="count-badge">'+logs.length+' entries</span></div><div style="padding:0 20px">';
-  if(logs.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No audit entries yet</div>';
+  // IT Admin only — block all other roles
+  if(currentProfile.role!=="superadmin"){
+    document.getElementById("pageContent").innerHTML=
+      '<div style="text-align:center;padding:60px 24px;color:var(--gray-400)">'
+      +'<div style="font-size:48px;margin-bottom:16px">&#128274;</div>'
+      +'<div style="font-size:16px;font-weight:700;color:var(--gray-600);margin-bottom:8px">Access Restricted</div>'
+      +'<div style="font-size:13px;color:var(--gray-400)">The audit log is only accessible to the IT Administrator.</div>'
+      +'</div>';
+    return;
+  }
+  var html='<div class="card"><div class="card-header"><span class="card-title">&#128270; Audit Trail</span><span class="count-badge">'+auditLogs.length+' entries</span></div><div style="padding:0 20px">';
+  if(auditLogs.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No audit entries yet</div>';
   else{
     var actionColors={add:"audit-dot-add",delete:"audit-dot-delete",approve:"audit-dot-approve",reject:"audit-dot-reject",login:"audit-dot-login",register:"audit-dot-register",system:"audit-dot-system"};
-    logs.forEach(function(l){
+    auditLogs.forEach(function(l){
       var ts="";
       if(l.timestamp&&l.timestamp.toDate){var d=l.timestamp.toDate();ts=d.toLocaleDateString("en-ZA")+" "+d.toLocaleTimeString("en-ZA",{hour:"2-digit",minute:"2-digit"});}
       var dotClass=actionColors[l.action]||"audit-dot-system";
