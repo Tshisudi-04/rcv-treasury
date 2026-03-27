@@ -841,6 +841,8 @@ function setupSidebar(){
     items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
     items.push({section:"Security"});
     items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
+    items.push({section:"Settings"});
+    items.push({id:"profile",icon:"&#128100;",label:"My Profile"});
   }
   nav.innerHTML="";
   items.forEach(function(item){
@@ -908,7 +910,7 @@ function navigateTo(page){
   document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
   var navEl=document.getElementById("nav-"+page);if(navEl)navEl.classList.add("active");
   var isAdmin=currentProfile&&currentProfile.role==="superadmin";
-  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:isAdmin?"Incident Log":"Audit Log",users:isAdmin?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity"};
+  var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:isAdmin?"Incident Log":"Audit Log",users:isAdmin?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity",profile:"My Profile"};
   document.getElementById("topbarTitle").textContent=titles[page]||page;
   document.getElementById("pageContent").innerHTML='<div style="text-align:center;padding:48px;color:var(--gray-400)">&#9729; Loading...</div>';
   if(page==="soc")renderSOC();
@@ -923,6 +925,7 @@ function navigateTo(page){
   else if(page==="reports")renderReports();
   else if(page==="audit")renderAudit();
   else if(page==="users")renderUsers();
+  else if(page==="profile")renderProfile();
   closeMobileMenu();
 }
 
@@ -1017,7 +1020,8 @@ function renderTxRows(txs){
       if(locked) delBtn='<span class="lock-icon" title="Locked: transactions older than '+TX_LOCK_DAYS+' days cannot be deleted">&#128274;</span>';
       else delBtn='<button class="del-btn" onclick="requestDelete(\''+t.id+'\',\''+escHtml(t.description)+'\')">&#128465;</button>';
     }
-    return'<tr><td style="color:var(--gray-500);white-space:nowrap">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td><td>'+delBtn+'</td></tr>';
+    var rcptIcon=t.receiptData?'<span title="Receipt attached" style="font-size:11px;margin-left:4px">&#128248;</span>':'';
+    return'<tr><td style="color:var(--gray-500);white-space:nowrap">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+rcptIcon+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td><td>'+delBtn+'</td></tr>';
   }).join("");
   return'<table><thead><tr><th>Date</th><th>Description</th><th>Branch</th><th>Type</th><th>Amount</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -1062,7 +1066,8 @@ function renderAddTransaction(){
     +'<div class="fg"><label>Description</label><input type="text" id="aDesc" placeholder="e.g. Sunday Service Collection"/></div>'
     +'<div class="expense-extra" id="expExtra"><div class="form-section-title">Expense Details</div>'
     +'<div class="fg-row"><div class="fg"><label>What was purchased</label><input type="text" id="aItem" placeholder="e.g. Chairs, printer paper"/></div><div class="fg"><label>Where / Supplier</label><input type="text" id="aVendor" placeholder="e.g. Makro"/></div></div>'
-    +'<div class="fg-row"><div class="fg"><label>Payment Method</label><select id="aPayment"><option value="">-- Select --</option><option>Cash</option><option>EFT</option><option>Card</option><option>Cheque</option></select></div><div class="fg"><label>Receipt / Ref No.</label><input type="text" id="aReceipt" placeholder="e.g. RCP-00123"/></div></div></div>'
+    +'<div class="fg-row"><div class="fg"><label>Payment Method</label><select id="aPayment"><option value="">-- Select --</option><option>Cash</option><option>EFT</option><option>Card</option><option>Cheque</option></select></div><div class="fg"><label>Receipt / Ref No.</label><input type="text" id="aReceipt" placeholder="e.g. RCP-00123"/></div></div>'
+    +'<div class="fg"><label>Attach Receipt (optional)</label><input type="file" id="aReceiptFile" accept="image/*,application/pdf" style="font-size:13px;padding:6px 0"/><div style="font-size:11px;color:var(--gray-400);margin-top:4px">Photo or PDF. Stored securely in Firebase.</div></div></div>'
     +'<div class="alert alert-info" style="margin-bottom:16px">&#128274; All transactions are saved with a full audit trail. Transactions older than '+TX_LOCK_DAYS+' days are locked and cannot be deleted.</div>'
     +'<button class="btn btn-navy" style="width:100%;padding:13px;font-size:14px;justify-content:center" onclick="checkAndSaveTx()">Save Transaction &#8594;</button>'
     +'<div class="saving-ind" id="savingInd">&#9729; Saving to cloud...</div></div>';
@@ -1106,13 +1111,31 @@ function confirmSaveTx(){
     if(it)tx.item=it.value.trim();if(ve)tx.vendor=ve.value.trim();if(pa)tx.payment=pa.value;if(re)tx.receipt=re.value.trim();
   }
   var si=document.getElementById("savingInd");if(si)si.style.display="block";
-  db.collection("transactions").add(tx).then(function(docRef){
-    writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]",currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
-    if(si)si.style.display="none";
-    var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved and audit log updated.</div>';
-    ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
-    var ap=document.getElementById("aPayment");if(ap)ap.value="";
-  }).catch(function(e){if(si)si.style.display="none";var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>';});
+  var receiptFileEl=document.getElementById("aReceiptFile");
+  var receiptFile=receiptFileEl&&receiptFileEl.files&&receiptFileEl.files[0]?receiptFileEl.files[0]:null;
+  function saveTxWithReceipt(receiptData){
+    if(receiptData) tx.receiptData=receiptData;
+    db.collection("transactions").add(tx).then(function(docRef){
+      writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]"+(receiptData?" [receipt attached]":""),currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
+      if(si)si.style.display="none";
+      var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved'+(receiptData?' with receipt':'')+" and audit log updated.</div>';
+      ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+      var ap=document.getElementById("aPayment");if(ap)ap.value="";
+      var rf=document.getElementById("aReceiptFile");if(rf)rf.value="";
+    }).catch(function(e){if(si)si.style.display="none";var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>';});
+  }
+  if(receiptFile){
+    if(receiptFile.size>800000){
+      var al=document.getElementById("addAlert");
+      if(al)al.innerHTML='<div class="alert alert-error">Receipt file too large. Please use an image under 800KB.</div>';
+      if(si)si.style.display="none";return;
+    }
+    var reader=new FileReader();
+    reader.onload=function(e){saveTxWithReceipt(e.target.result);};
+    reader.readAsDataURL(receiptFile);
+  } else {
+    saveTxWithReceipt(null);
+  }
 }
 
 // ===== FUND REQUESTS =====
@@ -1200,8 +1223,8 @@ function submitRequest(){
 
 // ===== AUDIT LOG =====
 function renderAudit(){
-  var isAdmin=currentProfile.role==="headtreasurer";
-  var logs=isAdmin?auditLogs:auditLogs.filter(function(l){return l.userEmail===currentProfile.email||(l.branch&&l.branch===currentProfile.branch);});
+  var isAdmin=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
+  var logs=isAdmin?auditLogs:auditLogs.filter(function(l){return l.branch&&l.branch===currentProfile.branch;});
   var html='<div class="card"><div class="card-header"><span class="card-title">&#128270; Audit Trail</span><span class="count-badge">'+logs.length+' entries</span></div><div style="padding:0 20px">';
   if(logs.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No audit entries yet</div>';
   else{
@@ -1617,6 +1640,33 @@ function processBackupCSV(){
     });
   };
   reader.readAsText(file);
+}
+
+// ===== PROFILE PAGE =====
+function renderProfile(){
+  var p=currentProfile;
+  var roleLabels={superadmin:"IT Administrator",headtreasurer:"Head Treasurer",treasurer:"Branch Treasurer",council:"Pastor / Elder (View Only)"};
+  var myTxs=allTransactions.filter(function(t){return t.addedBy===p.email;});
+  var myReqs=allRequests.filter(function(r){return r.submittedBy===p.email;});
+  var html='<div style="max-width:600px">';
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">&#128100; Account Details</span></div>';
+  html+='<div style="padding:20px;display:grid;gap:14px">';
+  html+='<div style="display:flex;align-items:center;gap:16px">';
+  html+='<div style="width:64px;height:64px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:800">'+( p.firstName||"?")[0].toUpperCase()+'</div>';
+  html+='<div><div style="font-size:18px;font-weight:800;color:var(--gray-800)">'+escHtml(p.firstName+" "+p.lastName)+'</div>';
+  html+='<div style="font-size:13px;color:var(--gray-400)">'+escHtml(p.email)+'</div></div></div>';
+  html+='<table style="width:100%"><tbody>';
+  [['Role',roleLabels[p.role]||p.role],['Branch',getBranchName(p.branch)],['Account Status','<span class="badge badge-green">Active</span>'],['Transactions Added',myTxs.length+' records'],['Fund Requests',myReqs.length+' submitted']].forEach(function(r){
+    html+='<tr><td style="padding:8px 0;font-size:12px;font-weight:700;color:var(--gray-400);width:40%">'+r[0]+'</td><td style="padding:8px 0;font-size:13px;color:var(--gray-800)">'+r[1]+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  html+='<div class="card"><div class="card-header"><span class="card-title">&#128274; Security</span></div>';
+  html+='<div style="padding:20px;display:grid;gap:12px">';
+  html+='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:12px;color:#2563eb">Sessions automatically expire after 30 minutes of inactivity. Always sign out on shared devices.</div>';
+  html+='<button class="btn btn-outline" onclick="showForgot()" style="align-self:start">&#128274; Change Password (via reset email)</button>';
+  html+='<button class="btn btn-red btn-sm" onclick="doSignOut()" style="align-self:start;width:fit-content">&#9099; Sign Out</button>';
+  html+='</div></div></div>';
+  document.getElementById("pageContent").innerHTML=html;
 }
 
 // MOBILE
