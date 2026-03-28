@@ -115,6 +115,34 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite;}
 .sync-dot.error{background:var(--red);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+.page-content > *{animation:fadeInUp 0.3s ease both;}
+.stat-card{animation:fadeInUp 0.3s ease both;}
+.stat-card:nth-child(1){animation-delay:0.05s;}
+.stat-card:nth-child(2){animation-delay:0.10s;}
+.stat-card:nth-child(3){animation-delay:0.15s;}
+.stat-card:nth-child(4){animation-delay:0.20s;}
+.nav-item{animation:slideIn 0.2s ease both;}
+.card{animation:fadeInUp 0.25s ease both;}
+.request-card{animation:fadeInUp 0.25s ease both;}
+.user-row{animation:fadeInUp 0.2s ease both;}
+.btn-primary:active,.btn-navy:active,.btn-green:active,.btn-red:active{transform:scale(0.97);}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.10);}
+.branch-summary-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+.nav-item:hover .nav-item-icon{background:rgba(255,255,255,0.12);transition:background 0.2s;}
+.request-card:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.09);}
+.topbar{transition:box-shadow 0.2s;}
+.form-group input:focus,.fg input:focus,.fg select:focus,.fg textarea:focus{transform:none;}
+.modal{animation:fadeInUp 0.25s ease both;}
+.auth-card{animation:fadeInUp 0.4s ease both;}
+.auth-left-body h2{animation:fadeInUp 0.5s ease both;}
+.auth-feature{animation:slideIn 0.3s ease both;}
+.auth-feature:nth-child(1){animation-delay:0.1s;}
+.auth-feature:nth-child(2){animation-delay:0.2s;}
+.auth-feature:nth-child(3){animation-delay:0.3s;}
+.auth-feature:nth-child(4){animation-delay:0.4s;}
 .page-content{padding:28px 32px;}
 
 /* SECURITY BADGE */
@@ -839,8 +867,6 @@ function setupSidebar(){
     if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
     items.push({section:"Reports"});
     items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
-    items.push({section:"Security"});
-    items.push({id:"audit",icon:"&#128270;",label:"Audit Log"});
     items.push({section:"Settings"});
     items.push({id:"profile",icon:"&#128100;",label:"My Profile"});
   }
