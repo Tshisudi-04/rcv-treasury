@@ -723,6 +723,14 @@ function loadUserProfile(user){
         showLoginScreen();
         return;
       }
+      if(currentProfile.status==="suspended"){
+        auth.signOut();
+        var errEl=document.getElementById("loginError");
+        errEl.textContent="Your account has been suspended. Please contact the IT Administrator.";
+        errEl.style.display="flex";
+        showLoginScreen();
+        return;
+      }
       initApp();
     });
   }
@@ -1338,10 +1346,18 @@ function renderUsers(){
     html+='</div>';
   }
   var active=allUsers.filter(function(u){return u.status==="approved";});
+  var suspended=allUsers.filter(function(u){return u.status==="suspended";});
   if(active.length>0){
-    html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px">&#10003; Active Users ('+active.length+')</div><div class="card">';
+    html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px">&#10003; Active Users ('+active.length+')</div><div class="card" style="margin-bottom:24px">';
     active.forEach(function(u){
-      html+='<div class="user-row"><div class="user-avatar" style="background:var(--navy)">'+( u.firstName||"?")[0].toUpperCase()+'</div><div class="user-info"><h4>'+escHtml(u.firstName+" "+u.lastName)+'</h4><p>'+escHtml(u.email)+' &middot; '+getBranchName(u.branch)+'</p></div><span class="badge badge-navy">'+u.role+'</span><button class="btn btn-red btn-sm" style="margin-left:8px" onclick="removeUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\',\''+u.email+'\')">&times; Remove</button></div>';
+      html+='<div class="user-row"><div class="user-avatar" style="background:var(--navy)">'+( u.firstName||"?")[0].toUpperCase()+'</div><div class="user-info"><h4>'+escHtml(u.firstName+" "+u.lastName)+'</h4><p>'+escHtml(u.email)+' &middot; '+getBranchName(u.branch)+' &middot; '+u.role+'</p></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn btn-outline btn-sm" onclick="suspendUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\')">&#128683; Suspend</button><button class="btn btn-red btn-sm" onclick="removeUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\',\''+u.email+'\')">&times; Remove</button></div></div>';
+    });
+    html+='</div>';
+  }
+  if(suspended.length>0){
+    html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:12px">&#128683; Suspended Users ('+suspended.length+')</div><div class="card" style="margin-bottom:24px">';
+    suspended.forEach(function(u){
+      html+='<div class="user-row" style="opacity:0.7"><div class="user-avatar" style="background:var(--gray-400)">'+( u.firstName||"?")[0].toUpperCase()+'</div><div class="user-info"><h4 style="color:var(--gray-500)">'+escHtml(u.firstName+" "+u.lastName)+'</h4><p>'+escHtml(u.email)+' &middot; '+getBranchName(u.branch)+' &middot; '+u.role+'</p></div><div style="display:flex;gap:6px;flex-shrink:0"><button class="btn btn-green btn-sm" onclick="restoreUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\')">&#9654; Restore</button><button class="btn btn-red btn-sm" onclick="removeUser(\''+u.uid+'\',\''+escHtml(u.firstName+" "+u.lastName)+'\',\''+u.email+'\')">&times; Remove</button></div></div>';
     });
     html+='</div>';
   }
@@ -1375,6 +1391,20 @@ function removeUser(uid,name,email){
   }).catch(function(e){
     alert("Error removing user: "+e.message);
   });
+}
+
+function suspendUser(uid,name){
+  if(!confirm("Suspend "+name+"? They will not be able to log in until restored."))return;
+  db.collection("users").doc(uid).update({status:"suspended",suspendedBy:currentUser.email,suspendedAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
+    writeAuditLog("delete","User suspended: "+name+" (UID: "+uid+")",currentProfile.email,"admin","all");
+  }).catch(function(e){alert("Error: "+e.message);});
+}
+
+function restoreUser(uid,name){
+  if(!confirm("Restore access for "+name+"? They will be able to log in again."))return;
+  db.collection("users").doc(uid).update({status:"approved",restoredBy:currentUser.email,restoredAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
+    writeAuditLog("approve","User access restored: "+name+" (UID: "+uid+")",currentProfile.email,"admin","all");
+  }).catch(function(e){alert("Error: "+e.message);});
 }
 
 // ===== SOC DASHBOARD =====
