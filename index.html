@@ -1118,7 +1118,7 @@ function confirmSaveTx(){
     db.collection("transactions").add(tx).then(function(docRef){
       writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]"+(receiptData?" [receipt attached]":""),currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
       if(si)si.style.display="none";
-      var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved'+(receiptData?' with receipt':'')+" and audit log updated.</div>';
+      var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved'+(receiptData?" with receipt":"")+' and audit log updated.</div>';
       ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
       var ap=document.getElementById("aPayment");if(ap)ap.value="";
       var rf=document.getElementById("aReceiptFile");if(rf)rf.value="";
