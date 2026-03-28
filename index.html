@@ -949,7 +949,7 @@ function navigateTo(page){
   else if(page==="requests")renderRequests();
   else if(page==="newrequest")renderNewRequest();
   else if(page==="reports")renderReports();
-  else if(page==="audit")renderAudit();
+  else if(page==="audit"){if(currentProfile.role!=="superadmin"){navigateTo("dashboard");return;}renderAudit();}
   else if(page==="users")renderUsers();
   else if(page==="profile")renderProfile();
   closeMobileMenu();
@@ -1249,8 +1249,11 @@ function submitRequest(){
 
 // ===== AUDIT LOG =====
 function renderAudit(){
-  var isAdmin=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
-  var logs=isAdmin?auditLogs:auditLogs.filter(function(l){return l.branch&&l.branch===currentProfile.branch;});
+  if(currentProfile.role!=="superadmin"){
+    document.getElementById("pageContent").innerHTML='<div style="text-align:center;padding:64px;color:var(--gray-400)"><div style="font-size:48px;margin-bottom:16px">&#128274;</div><div style="font-size:16px;font-weight:600;color:var(--gray-600)">Access Restricted</div><div style="font-size:13px;margin-top:8px">The Incident Log is only accessible to the IT Administrator.</div></div>';
+    return;
+  }
+  var logs=auditLogs;
   var html='<div class="card"><div class="card-header"><span class="card-title">&#128270; Audit Trail</span><span class="count-badge">'+logs.length+' entries</span></div><div style="padding:0 20px">';
   if(logs.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">No audit entries yet</div>';
   else{
