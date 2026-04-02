@@ -12,29 +12,29 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 :root{
-  --navy:#0f2456;--navy2:#1a3570;--navy3:#243f85;
-  --blue:#2563eb;--blue-light:#eff6ff;--blue-mid:#bfdbfe;
-  --gold:#c9a84c;--gold-light:#fef9ee;
+  --navy:#b91c1c;--navy2:#991b1b;--navy3:#7f1d1d;
+  --blue:#e11d48;--blue-light:#fff1f2;--blue-mid:#fecdd3;
+  --gold:#f59e0b;--gold-light:#fffbeb;
   --green:#16a34a;--green-light:#f0fdf4;
-  --red:#dc2626;--red-light:#fef2f2;
+  --red:#b91c1c;--red-light:#fff1f2;
   --amber:#d97706;--amber-light:#fffbeb;
   --purple:#7c3aed;--purple-light:#f5f3ff;
-  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
-  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
-  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;
-  --white:#ffffff;
-  --shadow-sm:0 1px 3px rgba(0,0,0,0.08);
-  --shadow:0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg:0 8px 32px rgba(0,0,0,0.12);
+  --gray-50:#0f0f0f;--gray-100:#1a1a1a;--gray-200:#2a2a2a;
+  --gray-300:#3d3d3d;--gray-400:#6b6b6b;--gray-500:#8c8c8c;
+  --gray-600:#b0b0b0;--gray-700:#d0d0d0;--gray-800:#f0f0f0;
+  --white:#1a1a1a;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.4);
+  --shadow:0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.5);
   --radius:12px;--radius-sm:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh;font-size:14px;}
+body{font-family:"Plus Jakarta Sans",sans-serif;background:#0f0f0f;color:#f0f0f0;min-height:100vh;font-size:14px;}
 
 /* AUTH */
 .auth-screen{display:flex;min-height:100vh;}
-.auth-left{width:420px;flex-shrink:0;background:linear-gradient(160deg,var(--navy),var(--navy2) 50%,var(--navy3));padding:48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+.auth-left{width:420px;flex-shrink:0;background:linear-gradient(160deg,#7f1d1d,#991b1b 50%,#b91c1c);padding:48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
 .auth-left::before{content:"";position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:rgba(255,255,255,0.03);}
 .auth-left::after{content:"";position:absolute;bottom:-60px;left:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,0.03);}
 .auth-brand{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
@@ -49,17 +49,17 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .auth-feature-icon{width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
 .auth-feature-text{font-size:13px;color:rgba(255,255,255,0.65);}
 .auth-left-foot{font-size:11px;color:rgba(255,255,255,0.25);position:relative;z-index:1;}
-.auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:48px;}
+.auth-right{flex:1;display:flex;align-items:center;justify-content:center;padding:48px;background:#141414;}
 .auth-card{width:100%;max-width:440px;}
-.auth-card h1{font-size:24px;font-weight:800;color:var(--gray-800);margin-bottom:6px;}
-.auth-card .auth-sub{font-size:14px;color:var(--gray-500);margin-bottom:32px;}
+.auth-card h1{font-size:24px;font-weight:800;color:#f0f0f0;margin-bottom:6px;}
+.auth-card .auth-sub{font-size:14px;color:#8c8c8c;margin-bottom:32px;}
 .form-group{margin-bottom:18px;}
 .form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
-.form-group input,.form-group select{width:100%;padding:11px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:14px;font-family:"Plus Jakarta Sans",sans-serif;color:var(--gray-800);background:white;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
-.form-group input:focus,.form-group select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.08);}
+.form-group input,.form-group select{width:100%;padding:11px 14px;border:1.5px solid #2a2a2a;border-radius:var(--radius-sm);font-size:14px;font-family:"Plus Jakarta Sans",sans-serif;color:#f0f0f0;background:#1a1a1a;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.form-group input:focus,.form-group select:focus{border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,0.15);}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.btn-primary{width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;font-family:"Plus Jakarta Sans",sans-serif;cursor:pointer;transition:all 0.2s;}
-.btn-primary:hover{background:var(--navy2);box-shadow:0 4px 14px rgba(15,36,86,0.3);}
+.btn-primary{width:100%;padding:12px;background:#b91c1c;color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;font-family:"Plus Jakarta Sans",sans-serif;cursor:pointer;transition:all 0.2s;}
+.btn-primary:hover{background:#991b1b;box-shadow:0 4px 14px rgba(185,28,28,0.4);}
 .auth-error{background:var(--red-light);color:var(--red);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:500;margin-bottom:16px;display:none;border:1px solid #fecaca;}
 .auth-success{background:var(--green-light);color:var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:500;margin-bottom:16px;display:none;border:1px solid #bbf7d0;}
 .auth-link{text-align:center;margin-top:16px;font-size:13px;color:var(--gray-500);}
@@ -77,7 +77,7 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 /* APP */
 #appScreen{display:none;min-height:100vh;}
 .app-layout{display:flex;min-height:100vh;}
-.sidebar{width:260px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform 0.3s;}
+.sidebar{width:260px;background:linear-gradient(180deg,#1a0000,#0f0000);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform 0.3s;}
 .sidebar-brand{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:12px;}
 .sidebar-brand-logo{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(201,168,76,0.4);}
 .sidebar-brand-name{color:white;font-size:13px;font-weight:700;line-height:1.2;}
@@ -103,9 +103,9 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,0.08);}
 .signout-btn{width:100%;padding:9px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:"Plus Jakarta Sans",sans-serif;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
 .signout-btn:hover{background:rgba(255,255,255,0.1);color:white;}
-.main-content{margin-left:260px;flex:1;min-height:100vh;}
-.topbar{background:white;border-bottom:1px solid var(--gray-200);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);}
-.topbar-title{font-size:18px;font-weight:700;color:var(--gray-800);}
+.main-content{margin-left:260px;flex:1;min-height:100vh;background:#0f0f0f;}
+.topbar{background:#141414;border-bottom:1px solid #2a2a2a;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);}
+.topbar-title{font-size:18px;font-weight:700;color:#f0f0f0;}
 .mob-menu-btn{display:none;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-700);padding:4px;line-height:1;}
 @media(max-width:900px){.mob-menu-btn{display:block;}}
 .topbar-right{display:flex;align-items:center;gap:16px;}
@@ -146,7 +146,7 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .page-content{padding:28px 32px;}
 
 /* SECURITY BADGE */
-.security-bar{background:linear-gradient(90deg,var(--navy),var(--navy2));color:white;padding:8px 32px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+.security-bar{background:linear-gradient(90deg,#1a0000,#2d0000);color:white;padding:8px 32px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
 .security-bar-left{display:flex;align-items:center;gap:16px;color:rgba(255,255,255,0.5);}
 .security-bar-item{display:flex;align-items:center;gap:5px;}
 .security-bar-item span{color:var(--gold);}
@@ -154,13 +154,13 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 
 /* CARDS */
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
-.stat-card{background:white;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);transition:all 0.2s;}
+.stat-card{background:#1a1a1a;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);border:1px solid #2a2a2a;transition:all 0.2s;}
 .stat-card:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
 .stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.stat-card-label{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;}
+.stat-card-label{font-size:12px;font-weight:600;color:#8c8c8c;text-transform:uppercase;letter-spacing:0.5px;}
 .stat-card-icon{width:38px;height:38px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:18px;}
-.stat-card-value{font-size:24px;font-weight:800;color:var(--gray-800);margin-bottom:4px;}
-.stat-card-sub{font-size:12px;color:var(--gray-400);}
+.stat-card-value{font-size:24px;font-weight:800;color:#f0f0f0;margin-bottom:4px;}
+.stat-card-sub{font-size:12px;color:#6b6b6b;}
 .icon-blue{background:var(--blue-light);}
 .icon-green{background:var(--green-light);}
 .icon-red{background:var(--red-light);}
@@ -169,14 +169,14 @@ body{font-family:"Plus Jakarta Sans",sans-serif;background:var(--gray-50);color:
 .icon-purple{background:var(--purple-light);}
 
 /* TABLE */
-.card{background:white;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);overflow:hidden;}
+.card{background:#1a1a1a;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid #2a2a2a;overflow:hidden;}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .card-title{font-size:15px;font-weight:700;color:var(--gray-800);}
 table{width:100%;border-collapse:collapse;}
-th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);background:var(--gray-50);border-bottom:1px solid var(--gray-200);}
-td{padding:13px 16px;border-bottom:1px solid var(--gray-50);font-size:13px;color:var(--gray-700);vertical-align:middle;}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#8c8c8c;background:#141414;border-bottom:1px solid #2a2a2a;}
+td{padding:13px 16px;border-bottom:1px solid #1f1f1f;font-size:13px;color:#d0d0d0;vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:var(--gray-50);}
+tr:hover td{background:#222222;}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;}
 .badge-green{background:var(--green-light);color:var(--green);}
 .badge-red{background:var(--red-light);color:var(--red);}
@@ -194,10 +194,10 @@ tr:hover td{background:var(--gray-50);}
 
 /* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:"Plus Jakarta Sans",sans-serif;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none;}
-.btn-navy{background:var(--navy);color:white;}
-.btn-navy:hover{background:var(--navy2);}
-.btn-outline{background:white;color:var(--gray-700);border:1.5px solid var(--gray-200);}
-.btn-outline:hover{border-color:var(--navy);color:var(--navy);}
+.btn-navy{background:#b91c1c;color:white;}
+.btn-navy:hover{background:#991b1b;}
+.btn-outline{background:#1a1a1a;color:#d0d0d0;border:1.5px solid #3d3d3d;}
+.btn-outline:hover{border-color:#b91c1c;color:#f87171;}
 .btn-green{background:var(--green);color:white;}
 .btn-green:hover{background:#15803d;}
 .btn-red{background:var(--red);color:white;}
@@ -212,15 +212,15 @@ tr:hover td{background:var(--gray-50);}
 .lock-icon{font-size:12px;color:var(--gray-300);}
 
 /* FORM */
-.form-card{background:white;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--gray-200);padding:28px;max-width:760px;}
-.form-card-title{font-size:17px;font-weight:700;color:var(--gray-800);margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--gray-100);}
+.form-card{background:#1a1a1a;border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid #2a2a2a;padding:28px;max-width:760px;}
+.form-card-title{font-size:17px;font-weight:700;color:#f0f0f0;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid #2a2a2a;}
 .form-section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-bottom:14px;margin-top:20px;display:flex;align-items:center;gap:8px;}
 .form-section-title::after{content:"";flex:1;height:1px;background:var(--gray-200);}
 .fg{margin-bottom:16px;}
 .fg label{display:block;font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:14px;font-family:"Plus Jakarta Sans",sans-serif;color:var(--gray-800);background:var(--gray-50);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1.5px solid #2a2a2a;border-radius:var(--radius-sm);font-size:14px;font-family:"Plus Jakarta Sans",sans-serif;color:#f0f0f0;background:#141414;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
 .fg textarea{min-height:90px;resize:vertical;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.08);background:white;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#b91c1c;box-shadow:0 0 0 3px rgba(185,28,28,0.15);background:#1a1a1a;}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .alert{padding:11px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px;}
 .alert-success{background:var(--green-light);color:var(--green);border:1px solid #bbf7d0;}
@@ -857,26 +857,26 @@ function setupSidebar(){
   var nav=document.getElementById("sidebarNav"),items=[];
   if(p.role==="superadmin"){
     items.push({section:"Security Operations"});
-    items.push({id:"soc",icon:"&#128737;",label:"SOC Dashboard"});
-    items.push({id:"threats",icon:"&#9888;",label:"Threat Monitor",badge:true});
-    items.push({id:"integrity",icon:"&#128268;",label:"System Integrity"});
+    items.push({id:"soc",icon:"[SOC]",label:"SOC Dashboard"});
+    items.push({id:"threats",icon:"[ALRT]",label:"Threat Monitor",badge:true});
+    items.push({id:"integrity",icon:"[SYS]",label:"System Integrity"});
     items.push({section:"Investigation"});
-    items.push({id:"audit",icon:"&#128270;",label:"Incident Log"});
+    items.push({id:"audit",icon:"[LOG]",label:"Incident Log"});
     items.push({section:"Administration"});
-    items.push({id:"users",icon:"&#128100;",label:"Entity Management",badge:true});
+    items.push({id:"users",icon:"[USR]",label:"Entity Management",badge:true});
   } else {
     items.push({section:"Main"});
-    items.push({id:"dashboard",icon:"&#128202;",label:"Dashboard"});
-    if(p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
-    items.push({id:"transactions",icon:"&#128179;",label:"Transactions"});
-    if(p.role!=="council") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
+    items.push({id:"dashboard",icon:"[DASH]",label:"Dashboard"});
+    if(p.role==="headtreasurer") items.push({id:"branches",icon:"[BRNCH]",label:"All Branches"});
+    items.push({id:"transactions",icon:"[TX]",label:"Transactions"});
+    if(p.role!=="council") items.push({id:"add",icon:"[+]",label:"Add Transaction"});
     items.push({section:"Funds"});
-    items.push({id:"requests",icon:"&#128203;",label:"Fund Requests",badge:true});
-    if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
+    items.push({id:"requests",icon:"[REQ]",label:"Fund Requests",badge:true});
+    if(p.role==="treasurer") items.push({id:"newrequest",icon:"[SEND]",label:"New Request"});
     items.push({section:"Reports"});
-    items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
+    items.push({id:"reports",icon:"[RPT]",label:"Generate Report"});
     items.push({section:"Settings"});
-    items.push({id:"profile",icon:"&#128100;",label:"My Profile"});
+    items.push({id:"profile",icon:"[USR]",label:"My Profile"});
   }
   nav.innerHTML="";
   items.forEach(function(item){
@@ -988,6 +988,32 @@ function renderDashboard(){
     html+='</div>';
   }
   if(pendingReqs>0&&isAdmin) html+='<div class="alert alert-info" style="margin-bottom:20px">&#128203; <strong>'+pendingReqs+' pending fund request'+( pendingReqs>1?"s":"")+'</strong> awaiting review. <a href="#" onclick="navigateTo(\'requests\')" style="font-weight:700;color:var(--blue)">Review now &#8594;</a></div>';
+  // Fund totals breakdown
+  var myTxsForFunds=getMyTxs();
+  var fundTotals={};
+  myTxsForFunds.forEach(function(t){
+    var f=t.fund||"other";
+    if(!fundTotals[f])fundTotals[f]={income:0,expense:0};
+    if(t.type==="income")fundTotals[f].income+=Number(t.amount);
+    else fundTotals[f].expense+=Number(t.amount);
+  });
+  var fundNames={tithes:"Tithes & Offerings",donations:"Donations",transport:"Transport Fund",events:"Events Fund",fundraising:"Fundraising Events",other:"Other"};
+  var fundKeys=Object.keys(fundTotals);
+  if(fundKeys.length>0){
+    html+='<div style="font-size:15px;font-weight:700;color:#f0f0f0;margin-bottom:12px">Fund Totals</div>';
+    html+='<div class="stats-grid" style="margin-bottom:24px">';
+    fundKeys.forEach(function(f){
+      var ft=fundTotals[f];
+      var net=ft.income-ft.expense;
+      var col=net>=0?"var(--green)":"#f87171";
+      html+='<div class="stat-card" style="border-left:3px solid '+col+'">';
+      html+='<div class="stat-card-label">'+escHtml(fundNames[f]||f)+'</div>';
+      html+='<div class="stat-card-value" style="font-size:18px;color:'+col+'">'+( net>=0?"+":"")+fmt(net)+'</div>';
+      html+='<div style="font-size:11px;color:#6b6b6b;margin-top:4px">In: '+fmt(ft.income)+' &nbsp;|&nbsp; Out: '+fmt(ft.expense)+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
   var recent=getMyTxs().slice(0,8);
   html+='<div class="card"><div class="card-header"><span class="card-title">Recent Transactions</span><button class="btn btn-outline btn-sm" onclick="navigateTo(\'transactions\')">View All</button></div>';
   if(recent.length===0) html+='<div style="text-align:center;padding:40px;color:var(--gray-400)">&#128219; No transactions yet</div>';
@@ -1159,14 +1185,40 @@ function confirmSaveTx(){
     }).catch(function(e){if(si)si.style.display="none";var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>';});
   }
   if(receiptFile){
-    if(receiptFile.size>800000){
-      var al=document.getElementById("addAlert");
-      if(al)al.innerHTML='<div class="alert alert-error">Receipt file too large. Please use an image under 800KB.</div>';
-      if(si)si.style.display="none";return;
+    // Compress image before storing - handles large phone photos
+    if(receiptFile.type==="application/pdf"){
+      // PDF: just store directly if under 2MB
+      if(receiptFile.size>2000000){
+        var al=document.getElementById("addAlert");
+        if(al)al.innerHTML='<div class="alert alert-error">PDF too large. Please use a file under 2MB.</div>';
+        if(si)si.style.display="none";return;
+      }
+      var reader=new FileReader();
+      reader.onload=function(e){saveTxWithReceipt(e.target.result);};
+      reader.readAsDataURL(receiptFile);
+    } else {
+      // Image: compress using canvas regardless of size
+      var img=new Image();
+      var reader=new FileReader();
+      reader.onload=function(e){
+        img.onload=function(){
+          var canvas=document.createElement("canvas");
+          var maxW=1200,maxH=1200;
+          var w=img.width,h=img.height;
+          if(w>maxW||h>maxH){
+            if(w/h>maxW/maxH){h=Math.round(h*(maxW/w));w=maxW;}
+            else{w=Math.round(w*(maxH/h));h=maxH;}
+          }
+          canvas.width=w;canvas.height=h;
+          var ctx=canvas.getContext("2d");
+          ctx.drawImage(img,0,0,w,h);
+          var compressed=canvas.toDataURL("image/jpeg",0.7);
+          saveTxWithReceipt(compressed);
+        };
+        img.src=e.target.result;
+      };
+      reader.readAsDataURL(receiptFile);
     }
-    var reader=new FileReader();
-    reader.onload=function(e){saveTxWithReceipt(e.target.result);};
-    reader.readAsDataURL(receiptFile);
   } else {
     saveTxWithReceipt(null);
   }
