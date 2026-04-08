@@ -1307,31 +1307,61 @@ function setupSidebar(){
 function setSyncStatus(state,msg){var dot=document.getElementById("syncDot");dot.className="sync-dot"+(state==="syncing"?" syncing":state==="error"?" error":"");document.getElementById("syncStatus").textContent=msg;}
 function listenToData(){
   setSyncStatus("syncing","Connecting...");
+  var role=currentProfile.role;
+
+  // ── TRANSACTIONS ──
+  // All roles read transactions, but branch-filtered server-side where possible
   db.collection("transactions").orderBy("date","desc").onSnapshot(function(snap){
     allTransactions=[];
-    snap.forEach(function(doc){var d=doc.data();d.id=doc.id;if(!d.branch)d.branch="main";if(!d.deleted)allTransactions.push(d);});
+    snap.forEach(function(doc){
+      var d=doc.data();d.id=doc.id;
+      if(!d.branch)d.branch="main";
+      if(!d.deleted)allTransactions.push(d);
+    });
     setSyncStatus("ok","Live — Secured");
     refreshCurrentPage();
   },function(err){
     setSyncStatus("error","Sync error");
     appLog("error","Transactions listener failed: "+err.message);
-    showGlobalError("Lost connection to the database. Please refresh if this persists.","warning");
+    showGlobalError("Database connection error. Please check your internet and refresh.","warning");
   });
-  db.collection("fundRequests").orderBy("createdAt","desc").onSnapshot(function(snap){
-    allRequests=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;allRequests.push(d);});
-    updateBadge("requests",allRequests.filter(function(r){return r.status==="pending";}).length);
-    if(currentPage==="requests")renderRequests();
-  });
-  db.collection("auditLog").orderBy("timestamp","desc").limit(200).onSnapshot(function(snap){
-    auditLogs=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;auditLogs.push(d);});
-    if(currentPage==="audit")renderAudit();
-  });
-  if(currentProfile.role==="superadmin"){
+
+  // ── FUND REQUESTS ── (all roles except council can see requests)
+  if(role!=="council"){
+    db.collection("fundRequests").orderBy("createdAt","desc").onSnapshot(function(snap){
+      allRequests=[];
+      snap.forEach(function(doc){var d=doc.data();d.id=doc.id;allRequests.push(d);});
+      var pendingCount=allRequests.filter(function(r){return r.status==="pending";}).length;
+      updateBadge("requests",role==="headtreasurer"?pendingCount:0);
+      if(currentPage==="requests")renderRequests();
+    },function(err){
+      appLog("error","Fund requests listener failed: "+err.message);
+    });
+  }
+
+  // ── AUDIT LOG ── superadmin only
+  if(role==="superadmin"){
+    db.collection("auditLog").orderBy("timestamp","desc").limit(500).onSnapshot(function(snap){
+      auditLogs=[];
+      snap.forEach(function(doc){var d=doc.data();d.id=doc.id;auditLogs.push(d);});
+      if(currentPage==="audit")renderAudit();
+    },function(err){
+      appLog("error","Audit log listener failed: "+err.message);
+    });
+  }
+
+  // ── USERS ── superadmin only
+  if(role==="superadmin"){
     db.collection("users").onSnapshot(function(snap){
       allUsers=[];pendingUsers=[];
-      snap.forEach(function(doc){var d=doc.data();allUsers.push(d);if(d.status==="pending")pendingUsers.push(d);});
+      snap.forEach(function(doc){
+        var d=doc.data();allUsers.push(d);
+        if(d.status==="pending")pendingUsers.push(d);
+      });
       updateBadge("users",pendingUsers.length);
       if(currentPage==="users")renderUsers();
+    },function(err){
+      appLog("error","Users listener failed: "+err.message);
     });
   }
 }
