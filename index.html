@@ -1307,101 +1307,63 @@ function setupSidebar(){
 function setSyncStatus(state,msg){var dot=document.getElementById("syncDot");dot.className="sync-dot"+(state==="syncing"?" syncing":state==="error"?" error":"");document.getElementById("syncStatus").textContent=msg;}
 function listenToData(){
   setSyncStatus("syncing","Connecting...");
+  var role=currentProfile.role;
 
-  function handlePermissionError(err,collection){
-    setSyncStatus("error","Firestore rules error");
-    appLog("error",collection+" listener failed: "+err.message);
-    // Show actionable banner for IT admin
-    if(currentProfile&&currentProfile.role==="superadmin"){
-      showPermissionBanner();
-    } else {
-      showGlobalError("Unable to load data. Please contact your IT Administrator.","warning");
-    }
-  }
-
+  // ── TRANSACTIONS ──
+  // All roles read transactions, but branch-filtered server-side where possible
   db.collection("transactions").orderBy("date","desc").onSnapshot(function(snap){
     allTransactions=[];
-    snap.forEach(function(doc){var d=doc.data();d.id=doc.id;if(!d.branch)d.branch="main";if(!d.deleted)allTransactions.push(d);});
+    snap.forEach(function(doc){
+      var d=doc.data();d.id=doc.id;
+      if(!d.branch)d.branch="main";
+      if(!d.deleted)allTransactions.push(d);
+    });
     setSyncStatus("ok","Live — Secured");
     refreshCurrentPage();
-  },function(err){ handlePermissionError(err,"Transactions"); });
+  },function(err){
+    setSyncStatus("error","Sync error");
+    appLog("error","Transactions listener failed: "+err.message);
+    showGlobalError("Database connection error. Please check your internet and refresh.","warning");
+  });
 
-  db.collection("fundRequests").orderBy("createdAt","desc").onSnapshot(function(snap){
-    allRequests=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;allRequests.push(d);});
-    updateBadge("requests",allRequests.filter(function(r){return r.status==="pending";}).length);
-    if(currentPage==="requests")renderRequests();
-  },function(err){ handlePermissionError(err,"Fund requests"); });
+  // ── FUND REQUESTS ── (all roles except council can see requests)
+  if(role!=="council"){
+    db.collection("fundRequests").orderBy("createdAt","desc").onSnapshot(function(snap){
+      allRequests=[];
+      snap.forEach(function(doc){var d=doc.data();d.id=doc.id;allRequests.push(d);});
+      var pendingCount=allRequests.filter(function(r){return r.status==="pending";}).length;
+      updateBadge("requests",role==="headtreasurer"?pendingCount:0);
+      if(currentPage==="requests")renderRequests();
+    },function(err){
+      appLog("error","Fund requests listener failed: "+err.message);
+    });
+  }
 
-  db.collection("auditLog").orderBy("timestamp","desc").limit(200).onSnapshot(function(snap){
-    auditLogs=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;auditLogs.push(d);});
-    if(currentPage==="audit")renderAudit();
-  },function(err){ handlePermissionError(err,"Audit log"); });
+  // ── AUDIT LOG ── superadmin only
+  if(role==="superadmin"){
+    db.collection("auditLog").orderBy("timestamp","desc").limit(500).onSnapshot(function(snap){
+      auditLogs=[];
+      snap.forEach(function(doc){var d=doc.data();d.id=doc.id;auditLogs.push(d);});
+      if(currentPage==="audit")renderAudit();
+    },function(err){
+      appLog("error","Audit log listener failed: "+err.message);
+    });
+  }
 
-  if(currentProfile.role==="superadmin"){
+  // ── USERS ── superadmin only
+  if(role==="superadmin"){
     db.collection("users").onSnapshot(function(snap){
       allUsers=[];pendingUsers=[];
-      snap.forEach(function(doc){var d=doc.data();allUsers.push(d);if(d.status==="pending")pendingUsers.push(d);});
+      snap.forEach(function(doc){
+        var d=doc.data();allUsers.push(d);
+        if(d.status==="pending")pendingUsers.push(d);
+      });
       updateBadge("users",pendingUsers.length);
       if(currentPage==="users")renderUsers();
-    },function(err){ handlePermissionError(err,"Users"); });
+    },function(err){
+      appLog("error","Users listener failed: "+err.message);
+    });
   }
-}
-
-// ── PERMISSION ERROR BANNER ──
-var permBannerShown=false;
-function showPermissionBanner(){
-  if(permBannerShown)return;
-  permBannerShown=true;
-  var banner=document.createElement("div");
-  banner.id="permBanner";
-  banner.style.cssText="position:fixed;top:0;left:0;right:0;z-index:9997;background:#1e3a5f;color:white;padding:0;font-family:'Plus Jakarta Sans',sans-serif;";
-  banner.innerHTML='<div style="padding:14px 20px;display:flex;align-items:flex-start;gap:14px">'
-    +'<span style="font-size:22px;flex-shrink:0">&#128275;</span>'
-    +'<div style="flex:1">'
-    +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">Firestore Security Rules need to be set — database is locked</div>'
-    +'<div style="font-size:12px;opacity:0.85;line-height:1.6">'
-    +'<strong>Fix in 3 steps:</strong><br>'
-    +'1. Go to <a href="https://console.firebase.google.com/project/church-finance-system-f1ca4/firestore/rules" target="_blank" style="color:#93c5fd;font-weight:700">Firebase Console → Firestore → Rules</a><br>'
-    +'2. Replace all existing rules with the rules below, then click <strong>Publish</strong><br>'
-    +'3. Refresh this page'
-    +'</div>'
-    +'<details style="margin-top:10px">'
-    +'<summary style="cursor:pointer;font-size:12px;font-weight:700;color:#93c5fd">&#128196; Click to show the rules to paste</summary>'
-    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    // Transactions — any signed-in user can read; approved users can write
-    match /transactions/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    // Fund Requests
-    match /fundRequests/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    // Users — any authenticated user can read/write own profile
-    match /users/{uid} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Audit Log — anyone can append, only IT Admin can read, nobody can delete
-    match /auditLog/{id} {
-      allow read: if request.auth != null
-        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';
-      allow create: if request.auth != null;
-      allow update, delete: if false;
-    }
-  }
-}</pre>'
-    +'</details>'
-    +'</div>'
-    +'<button onclick="document.getElementById(\'permBanner\').remove();permBannerShown=false;" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;flex-shrink:0">&#10005;</button>'
-    +'</div>';
-  document.body.insertBefore(banner,document.body.firstChild);
 }
 function updateBadge(id,count){var b=document.getElementById("badge-"+id);if(b){b.textContent=count;b.style.display=count>0?"inline-flex":"none";}}
 function refreshCurrentPage(){
