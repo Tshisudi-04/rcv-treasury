@@ -188,6 +188,9 @@ body::before{
   50%{opacity:0.8;box-shadow:0 0 0 6px rgba(22,163,74,0);}
 }
 .security-bar span{color:rgba(255,255,255,0.65);}
+.security-bar-left{display:flex;align-items:center;gap:16px;flex:1;}
+.security-bar-right{display:flex;align-items:center;gap:16px;margin-left:auto;}
+.security-bar-item{display:flex;align-items:center;gap:6px;}
 
 /* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
@@ -407,6 +410,19 @@ tr:hover td{background:rgba(192,21,42,0.03);}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
 
 /* ── SESSION WARNING ── */
+/* ── MAINTENANCE BANNER ── */
+.maintenance-banner{
+  position:fixed;top:0;left:0;right:0;z-index:9998;
+  background:linear-gradient(135deg,#92400e,#b45309);
+  color:white;padding:10px 20px;
+  display:flex;align-items:center;gap:12px;
+  font-size:13px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;
+  animation:liquidIn 0.4s ease both;
+  box-shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+.maintenance-banner .maint-icon{font-size:18px;flex-shrink:0;}
+.maintenance-banner .maint-text{flex:1;line-height:1.4;}
+.maintenance-banner .maint-dismiss{background:rgba(255,255,255,0.2);border:none;color:white;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;flex-shrink:0;}
 .session-warning{
   position:fixed;top:0;left:0;right:0;z-index:9999;
   background:var(--amber);color:white;padding:12px 24px;
@@ -673,6 +689,9 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
 </head>
 <body>
 
+<!-- MAINTENANCE BANNER (populated from Firestore) -->
+<div id="maintenanceBanner" style="display:none"></div>
+
 <!-- SESSION WARNING -->
 <div class="session-warning" id="sessionWarning">
   &#9888; Your session expires in <span id="sessionCountdown" class="session-timer">5:00</span> due to inactivity.
@@ -731,6 +750,15 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
       <div class="form-group"><label>Password</label><input type="password" id="lPass" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/></div>
       <div class="forgot-link"><a onclick="showForgot()">Forgot password?</a></div>
       <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In &nbsp;&#8594;</button>
+      <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+        <span style="font-size:12px;color:rgba(255,255,255,0.35)">or</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+      </div>
+      <button onclick="doGoogleSignIn()" style="width:100%;padding:11px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.14);border-radius:10px;color:rgba(255,255,255,0.85);font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/></svg>
+        Sign in with Google
+      </button>
       <div class="auth-link">Don&rsquo;t have an account? <a onclick="showRegister()">Register your branch</a></div>
     </div>
   </div>
@@ -814,7 +842,7 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
       <div class="security-bar-item">&#128203; <span>Audit Trail Active</span></div>
       <div class="security-bar-item">&#128375; <span>Fraud Detection On</span></div>
     </div>
-    <div class="security-bar-left">
+    <div class="security-bar-right">
       <div class="security-bar-item">Session: <span id="secBarTimer">30:00</span></div>
       <div class="security-bar-item">User: <span id="secBarUser"></span></div>
     </div>
@@ -862,6 +890,56 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
 // ============================================================
 var FIREBASE_CONFIG={apiKey:"AIzaSyDYIoAWfSGFbEeTyaFcD_18vJ6RVK4tcXk",authDomain:"church-finance-system-f1ca4.firebaseapp.com",projectId:"church-finance-system-f1ca4",storageBucket:"church-finance-system-f1ca4.firebasestorage.app",messagingSenderId:"209970272665",appId:"1:209970272665:web:909a10d23301a58ad0db08"};
 var SUPER_ADMIN_EMAIL="khathutshelotshisudi@gmail.com";
+/*
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  FIRESTORE SECURITY RULES — paste in Firebase Console               │
+  │  Firestore Database → Rules                                          │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  rules_version = '2';                                                │
+  │  service cloud.firestore {                                           │
+  │    match /databases/{db}/documents {                                 │
+  │      // Only authenticated, approved users can read/write            │
+  │      match /transactions/{id} {                                      │
+  │        allow read: if request.auth != null;                          │
+  │        allow write: if request.auth != null                          │
+  │          && get(/databases/$(db)/documents/users/$(request.auth.uid))│
+  │             .data.status == 'approved';                              │
+  │      }                                                               │
+  │      match /fundRequests/{id} {                                      │
+  │        allow read: if request.auth != null;                          │
+  │        allow write: if request.auth != null                          │
+  │          && get(/databases/$(db)/documents/users/$(request.auth.uid))│
+  │             .data.status == 'approved';                              │
+  │      }                                                               │
+  │      match /users/{uid} {                                            │
+  │        // Users can only read their own doc; admin reads all         │
+  │        allow read: if request.auth != null                           │
+  │          && (request.auth.uid == uid                                 │
+  │             || request.auth.token.email ==                           │
+  │                'khathutshelotshisudi@gmail.com');                    │
+  │        allow write: if request.auth != null;                         │
+  │      }                                                               │
+  │      match /auditLog/{id} {                                          │
+  │        allow read: if request.auth != null                           │
+  │          && request.auth.token.email ==                              │
+  │             'khathutshelotshisudi@gmail.com';                        │
+  │        allow create: if request.auth != null;                        │
+  │        allow update, delete: if false; // immutable audit log        │
+  │      }                                                               │
+  │    }                                                                 │
+  │  }                                                                   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  FIRESTORE INDEXES (Firebase Console → Indexes):                     │
+  │  Collection: transactions                                            │
+  │    Fields: branch ASC, date DESC                                     │
+  │    Fields: deleted ASC, date DESC                                    │
+  │    Fields: branch ASC, deleted ASC, date DESC                        │
+  │  Collection: auditLog                                                │
+  │    Fields: userEmail ASC, timestamp DESC                             │
+  │  Collection: fundRequests                                            │
+  │    Fields: branch ASC, status ASC, createdAt DESC                    │
+  └─────────────────────────────────────────────────────────────────────┘
+*/
 // ============================================================
 //  EMAILJS CONFIG — Fill these in after EmailJS setup
 //  See setup instructions at bottom of this file
@@ -887,7 +965,7 @@ var TX_LOCK_DAYS=30; // transactions older than this cannot be deleted
 var SESSION_TIMEOUT=5*60; // 5 minutes in seconds
 var SESSION_WARN_AT=1*60; // show warning at 1 minute remaining
 var MAX_LOGIN_ATTEMPTS=5;
-var LOCKOUT_SECONDS=30;
+var LOCKOUT_SECONDS=300; // 5-minute lockout after 5 failed attempts
 
 var BRANCHES={main:{name:"Main Congregation",location:"Bedworth Park",color:"#0f2456"},vut:{name:"VUT Fellowship Centre",location:"Vanderbijlpark",color:"#2563eb"},ufs:{name:"UFS Fellowship Centre",location:"Bloemfontein",color:"#16a34a"},pe:{name:"PE Fellowship (Gqeberha)",location:"Port Elizabeth",color:"#dc2626"},secunda:{name:"Secunda Fellowship Centre",location:"Secunda",color:"#d97706"}};
 var MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -899,10 +977,99 @@ var selectedType="income",reportType="month",currentPage="";
 var pendingTxData=null,pendingDeleteId=null;
 var loginAttempts=0,lockoutActive=false;
 var sessionTimer=SESSION_TIMEOUT,sessionInterval=null,sessionWarnShown=false;
+var permBannerShown=false;
 
 // INIT
 firebase.initializeApp(FIREBASE_CONFIG);
 db=firebase.firestore(); auth=firebase.auth();
+var googleProvider=new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({prompt:"select_account"});
+
+function doGoogleSignIn(){
+  auth.signInWithPopup(googleProvider).then(function(result){
+    // Check if user has a Firestore profile
+    var user=result.user;
+    var email=user.email.toLowerCase();
+    // Superadmin and head treasurer bypass profile check
+    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||email===HEAD_TREASURER_EMAIL.toLowerCase()){
+      return; // onAuthStateChanged handles it
+    }
+    // Check if this Google user has been approved in our system
+    db.collection("users").where("email","==",user.email).get().then(function(snap){
+      if(snap.empty){
+        // Auto-create a pending profile for new Google users
+        var names=user.displayName?user.displayName.split(" "):["",""];
+        var fn=names[0]||"";
+        var ln=names.slice(1).join(" ")||"";
+        db.collection("users").doc(user.uid).set({
+          uid:user.uid,firstName:fn,lastName:ln,
+          email:user.email,branch:"",role:"",
+          status:"pending",
+          createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+          signInMethod:"google"
+        }).then(function(){
+          writeAuditLog("register","New Google sign-in — pending role assignment: "+user.email,"system","unknown","all");
+          auth.signOut();
+          var errEl=document.getElementById("loginError");
+          if(errEl){errEl.textContent="Your Google account has been registered. Please wait for the IT Administrator to assign your branch and role before you can access the portal.";errEl.style.display="flex";}
+        });
+      } else {
+        var userData=snap.docs[0].data();
+        if(userData.status==="suspended"){
+          auth.signOut();
+          var errEl=document.getElementById("loginError");
+          if(errEl){errEl.textContent="Your account has been suspended. Contact the IT Administrator.";errEl.style.display="flex";}
+        }
+        // approved users handled by onAuthStateChanged
+      }
+    });
+  }).catch(function(e){
+    var errEl=document.getElementById("loginError");
+    if(errEl){errEl.textContent="Google sign-in failed: "+e.message;errEl.style.display="flex";}
+  });
+}
+
+// ── GLOBAL LOGGING SYSTEM ──
+var appLogs=[];
+function appLog(level,message,context){
+  var entry={level:level,message:message,context:context||{},ts:new Date().toISOString()};
+  appLogs.push(entry);
+  if(appLogs.length>200)appLogs.shift();
+  if(level==="error"||level==="warn")console[level]("[RCV Portal]",message,context||"");
+  // Write critical errors to Firestore audit log
+  if(level==="error"&&currentProfile){
+    writeAuditLog("system","App error: "+message,currentProfile.email,currentProfile.branch||"unknown","all");
+  }
+}
+
+// ── GLOBAL ERROR HANDLER ──
+window.onerror=function(msg,src,line,col,err){
+  appLog("error",msg,{src:src,line:line,col:col,stack:err?err.stack:null});
+  showGlobalError("An unexpected error occurred. The error has been logged.");
+  return false;
+};
+window.addEventListener("unhandledrejection",function(e){
+  appLog("error","Unhandled promise rejection: "+(e.reason?e.reason.message||e.reason:"unknown"),{reason:e.reason});
+});
+
+// ── OFFLINE / NETWORK DETECTION ──
+function handleOnline(){setSyncStatus("syncing","Reconnecting...");}
+function handleOffline(){setSyncStatus("error","Offline — changes will sync when reconnected");showGlobalError("You appear to be offline. Data will sync when your connection is restored.","warning");}
+window.addEventListener("online",handleOnline);
+window.addEventListener("offline",handleOffline);
+
+// ── GLOBAL ERROR TOAST ──
+function showGlobalError(msg,type){
+  var existing=document.getElementById("globalToast");
+  if(existing)existing.remove();
+  var toast=document.createElement("div");
+  toast.id="globalToast";
+  var bg=type==="warning"?"var(--amber)":"var(--red)";
+  toast.style.cssText="position:fixed;bottom:24px;right:24px;z-index:9998;background:"+bg+";color:white;padding:14px 20px;border-radius:10px;font-size:13px;font-weight:600;max-width:340px;box-shadow:0 8px 24px rgba(0,0,0,0.25);animation:liquidIn 0.3s ease both;font-family:'Plus Jakarta Sans',sans-serif;";
+  toast.innerHTML='<div style="display:flex;align-items:flex-start;gap:10px"><span style="font-size:18px">'+(type==="warning"?"&#9888;":"&#9888;")+'</span><div><div>'+escHtml(msg)+'</div><div style="margin-top:6px;opacity:0.8;font-size:11px">'+new Date().toLocaleTimeString("en-ZA")+'</div></div><button onclick="this.parentElement.parentElement.remove()" style="background:rgba(255,255,255,0.2);border:none;color:white;border-radius:4px;padding:2px 8px;cursor:pointer;margin-left:auto;font-size:12px;flex-shrink:0">&#10005;</button></div>';
+  document.body.appendChild(toast);
+  setTimeout(function(){if(toast.parentElement)toast.remove();},8000);
+}
 auth.onAuthStateChanged(function(user){ if(user){currentUser=user;loadUserProfile(user);}else{showLoginScreen();} });
 
 // ===== AUTH SCREENS =====
@@ -947,7 +1114,8 @@ function startLockout(){
   var iv=setInterval(function(){
     t--;
     var ts=document.getElementById("lockoutTimer");
-    if(ts) ts.textContent=t;
+    var m=Math.floor(t/60),s=t%60;
+    if(ts) ts.textContent=m+":"+( s<10?"0":"")+s;
     if(t<=0){
       clearInterval(iv);
       lockoutActive=false;
@@ -964,8 +1132,13 @@ function doRegister(){
   var branch=document.getElementById("rBranch").value,role=document.getElementById("rRole").value;
   var errEl=document.getElementById("regError"),sucEl=document.getElementById("regSuccess");
   errEl.style.display="none";sucEl.style.display="none";
+  var emailRx=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var nameRx=/^[a-zA-ZÀ-ÿ\s'\-]{2,50}$/;
   if(!fn||!ln||!email||!pass||!branch||!role){errEl.textContent="Please fill in all fields.";errEl.style.display="flex";return;}
+  if(!nameRx.test(fn)||!nameRx.test(ln)){errEl.textContent="Names must be 2-50 letters only.";errEl.style.display="flex";return;}
+  if(!emailRx.test(email)){errEl.textContent="Please enter a valid email address.";errEl.style.display="flex";return;}
   if(pass.length<8){errEl.textContent="Password must be at least 8 characters.";errEl.style.display="flex";return;}
+  if(!/[A-Z]/.test(pass)||!/[0-9]/.test(pass)){errEl.textContent="Password must contain at least one uppercase letter and one number.";errEl.style.display="flex";return;}
   auth.createUserWithEmailAndPassword(email,pass).then(function(cred){
     return db.collection("users").doc(cred.user.uid).set({uid:cred.user.uid,firstName:fn,lastName:ln,email:email,branch:branch,role:role,status:"pending",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
   }).then(function(){
@@ -993,8 +1166,8 @@ function doForgot(){
   var errEl=document.getElementById("forgotError"),sucEl=document.getElementById("forgotSuccess");
   errEl.style.display="none";sucEl.style.display="none";
   if(!email){errEl.textContent="Please enter your email.";errEl.style.display="flex";return;}
-  auth.sendPasswordResetEmail(email).then(function(){
-    sucEl.textContent="Password reset email sent! Check your inbox. This is completely free.";
+  auth.sendPasswordResetEmail(email,{url:LOGIN_URL,handleCodeInApp:false}).then(function(){
+    sucEl.textContent="Password reset email sent! The link expires in 1 hour. Check your inbox.";
     sucEl.style.display="flex";
     document.getElementById("fEmail").value="";
   }).catch(function(){errEl.textContent="Could not send reset email. Please check the address.";errEl.style.display="flex";});
@@ -1209,29 +1382,107 @@ function setupSidebar(){
 function setSyncStatus(state,msg){var dot=document.getElementById("syncDot");dot.className="sync-dot"+(state==="syncing"?" syncing":state==="error"?" error":"");document.getElementById("syncStatus").textContent=msg;}
 function listenToData(){
   setSyncStatus("syncing","Connecting...");
+  // Load maintenance notice
+  db.collection("siteConfig").doc("maintenance").get().then(function(doc){
+    if(doc.exists&&doc.data().active){
+      showMaintenanceBanner(doc.data().message||"Scheduled maintenance coming soon. Some features may be temporarily unavailable.");
+    }
+  }).catch(function(){});// Silently ignore if collection doesn't exist
+
+  function handlePermissionError(err,collection){
+    setSyncStatus("error","Firestore rules error");
+    appLog("error",collection+" listener failed: "+err.message);
+    // Show actionable banner for IT admin
+    if(currentProfile&&currentProfile.role==="superadmin"){
+      showPermissionBanner();
+    } else {
+      showGlobalError("Unable to load data. Please contact your IT Administrator.","warning");
+    }
+  }
+
   db.collection("transactions").orderBy("date","desc").onSnapshot(function(snap){
     allTransactions=[];
     snap.forEach(function(doc){var d=doc.data();d.id=doc.id;if(!d.branch)d.branch="main";if(!d.deleted)allTransactions.push(d);});
     setSyncStatus("ok","Live — Secured");
     refreshCurrentPage();
-  },function(){setSyncStatus("error","Connection error");});
+  },function(err){ handlePermissionError(err,"Transactions"); });
+
   db.collection("fundRequests").orderBy("createdAt","desc").onSnapshot(function(snap){
     allRequests=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;allRequests.push(d);});
     updateBadge("requests",allRequests.filter(function(r){return r.status==="pending";}).length);
     if(currentPage==="requests")renderRequests();
-  });
+  },function(err){ handlePermissionError(err,"Fund requests"); });
+
   db.collection("auditLog").orderBy("timestamp","desc").limit(200).onSnapshot(function(snap){
     auditLogs=[];snap.forEach(function(doc){var d=doc.data();d.id=doc.id;auditLogs.push(d);});
     if(currentPage==="audit")renderAudit();
-  });
+  },function(err){ handlePermissionError(err,"Audit log"); });
+
   if(currentProfile.role==="superadmin"){
     db.collection("users").onSnapshot(function(snap){
       allUsers=[];pendingUsers=[];
       snap.forEach(function(doc){var d=doc.data();allUsers.push(d);if(d.status==="pending")pendingUsers.push(d);});
       updateBadge("users",pendingUsers.length);
       if(currentPage==="users")renderUsers();
-    });
+    },function(err){ handlePermissionError(err,"Users"); });
   }
+}
+
+// ── PERMISSION ERROR BANNER ──
+// permBannerShown removed
+function showPermissionBanner(){
+  if(permBannerShown)return;
+  permBannerShown=true;
+  var banner=document.createElement("div");
+  banner.id="permBanner";
+  banner.style.cssText="position:fixed;top:0;left:0;right:0;z-index:9997;background:#1e3a5f;color:white;padding:0;font-family:'Plus Jakarta Sans',sans-serif;";
+  banner.innerHTML='<div style="padding:14px 20px;display:flex;align-items:flex-start;gap:14px">'
+    +'<span style="font-size:22px;flex-shrink:0">&#128275;</span>'
+    +'<div style="flex:1">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">Firestore Security Rules need to be set — database is locked</div>'
+    +'<div style="font-size:12px;opacity:0.85;line-height:1.6">'
+    +'<strong>Fix in 3 steps:</strong><br>'
+    +'1. Go to <a href="https://console.firebase.google.com/project/church-finance-system-f1ca4/firestore/rules" target="_blank" style="color:#93c5fd;font-weight:700">Firebase Console → Firestore → Rules</a><br>'
+    +'2. Replace all existing rules with the rules below, then click <strong>Publish</strong><br>'
+    +'3. Refresh this page'
+    +'</div>'
+    +'<details style="margin-top:10px">'
+    +'<summary style="cursor:pointer;font-size:12px;font-weight:700;color:#93c5fd">&#128196; Click to show the rules to paste</summary>'
+    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Transactions — any signed-in user can read; approved users can write
+    match /transactions/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Fund Requests
+    match /fundRequests/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Users — any authenticated user can read/write own profile
+    match /users/{uid} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Audit Log — anyone can append, only IT Admin can read, nobody can delete
+    match /auditLog/{id} {
+      allow read: if request.auth != null
+        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+  }
+}</pre>'
+    +'</details>'
+    +'</div>'
+    +'<button onclick="document.getElementById(\'permBanner\').remove();permBannerShown=false;" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;flex-shrink:0">&#10005;</button>'
+    +'</div>';
+  document.body.insertBefore(banner,document.body.firstChild);
 }
 function updateBadge(id,count){var b=document.getElementById("badge-"+id);if(b){b.textContent=count;b.style.display=count>0?"inline-flex":"none";}}
 function refreshCurrentPage(){
@@ -1248,7 +1499,16 @@ function refreshCurrentPage(){
 function parseLocalDate(s){var p=s.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
 function fmt(n){return "R "+Number(n||0).toLocaleString("en-ZA",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function getSummary(txs){var i=0,e=0;txs.forEach(function(t){if(t.type==="income")i+=Number(t.amount);else e+=Number(t.amount);});return{income:i,expenses:e,balance:i-e};}
-function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;");}
+function sanitizeText(s,maxLen){
+  if(!s)return"";
+  // Strip control characters, limit length
+  return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,"").substring(0,maxLen||255).trim();
+}
+function sanitizeCurrency(v){
+  var n=parseFloat(String(v).replace(/[^0-9.]/g,""));
+  return isNaN(n)||n<0||n>9999999?null:Math.round(n*100)/100;
+}
 function getMyTxs(){if(currentProfile.role==="headtreasurer")return allTransactions;return allTransactions.filter(function(t){return t.branch===currentProfile.branch;});}
 function getBranchName(b){return BRANCHES[b]?BRANCHES[b].name:b;}
 function getBranchColor(b){return BRANCHES[b]?BRANCHES[b].color:"#0f2456";}
@@ -1267,32 +1527,52 @@ function navigateTo(page){
   var titles={dashboard:"Dashboard",branches:"All Branches",transactions:"Transactions",add:"Add Transaction",requests:"Fund Requests",newrequest:"New Fund Request",reports:"Generate Report",audit:isAdmin?"Incident Log":"Audit Log",users:isAdmin?"Entity Management":"Manage Users",soc:"SOC Dashboard",threats:"Threat Monitor",integrity:"System Integrity",settings:"Settings"};
   document.getElementById("topbarTitle").textContent=titles[page]||page;
   var pc=document.getElementById("pageContent");
-  pc.style.opacity="0";pc.style.transform="translateY(10px)";
-  pc.style.transition="opacity 0.18s ease,transform 0.18s ease";
+  // ── ROLE-BASED ACCESS GUARD ──
+  var r=currentProfile?currentProfile.role:"";
+  var ACCESS={
+    soc:["superadmin"],threats:["superadmin"],integrity:["superadmin"],
+    audit:["superadmin"],users:["superadmin"],
+    branches:["headtreasurer","superadmin"],
+    add:["superadmin","headtreasurer","treasurer"],
+    newrequest:["treasurer"],
+    dashboard:["superadmin","headtreasurer","treasurer","council"],
+    transactions:["superadmin","headtreasurer","treasurer","council"],
+    requests:["superadmin","headtreasurer","treasurer"],
+    reports:["superadmin","headtreasurer","treasurer","council"],
+    settings:["superadmin","headtreasurer","treasurer","council"]
+  };
+  if(ACCESS[page]&&ACCESS[page].indexOf(r)===-1){
+    pc.innerHTML='<div style="text-align:center;padding:60px"><div style="font-size:48px;margin-bottom:16px">&#128274;</div><div style="font-size:18px;font-weight:700;color:var(--gray-800);margin-bottom:8px">Access Restricted</div><div style="font-size:14px;color:var(--gray-500)">You do not have permission to view this page.</div></div>';
+    return;
+  }
+  // Fade out, render, fade in — render INSIDE the timeout so content isn't overwritten
+  pc.style.opacity="0";
+  pc.style.transform="translateY(8px)";
+  pc.style.transition="opacity 0.15s ease,transform 0.15s ease";
   setTimeout(function(){
-    pc.innerHTML='<div style="text-align:center;padding:48px;color:var(--gray-400)">&#9729; Loading...</div>';
-    pc.style.opacity="1";pc.style.transform="translateY(0)";
-  },100);
-  if(page==="soc")renderSOC();
-  else if(page==="threats")renderThreats();
-  else if(page==="integrity")renderIntegrity();
-  else if(page==="dashboard")renderDashboard();
-  else if(page==="branches")renderBranches();
-  else if(page==="transactions")renderTransactions();
-  else if(page==="add")renderAddTransaction();
-  else if(page==="requests")renderRequests();
-  else if(page==="newrequest")renderNewRequest();
-  else if(page==="reports")renderReports();
-  else if(page==="audit")renderAudit();
-  else if(page==="users")renderUsers();
-  else if(page==="settings")renderSettings();
+    if(page==="soc")renderSOC();
+    else if(page==="threats")renderThreats();
+    else if(page==="integrity")renderIntegrity();
+    else if(page==="dashboard")renderDashboard();
+    else if(page==="branches")renderBranches();
+    else if(page==="transactions")renderTransactions();
+    else if(page==="add")renderAddTransaction();
+    else if(page==="requests")renderRequests();
+    else if(page==="newrequest")renderNewRequest();
+    else if(page==="reports")renderReports();
+    else if(page==="audit")renderAudit();
+    else if(page==="users")renderUsers();
+    else if(page==="settings")renderSettings();
+    pc.style.opacity="1";
+    pc.style.transform="translateY(0)";
+  },120);
   closeMobileMenu();
 }
 
 // ===== DASHBOARD =====
 function renderDashboard(){
   var txs=getMyTxs(),s=getSummary(txs);
-  var isAdmin=currentProfile.role==="headtreasurer";
+  var isAdmin=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
   var pendingReqs=allRequests.filter(function(r){return r.status==="pending";}).length;
   var html='<div class="stats-grid">';
   html+=statCard("Total Income",fmt(s.income),"&#128200;","icon-green","All time");
@@ -1335,9 +1615,7 @@ function renderDashboard(){
     return '<tr><td style="color:var(--gray-500)">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td></tr>';
   }).join("")+'</tbody></table>';
   html+='</div>';
-  var pc2=document.getElementById("pageContent");
-  pc2.innerHTML=html;
-  pc2.style.opacity="1";pc2.style.transform="translateY(0)";
+  document.getElementById("pageContent").innerHTML=html;
 }
 function statCard(label,value,icon,iconClass,sub){return'<div class="stat-card"><div class="stat-card-header"><div class="stat-card-label">'+label+'</div><div class="stat-card-icon '+iconClass+'">'+icon+'</div></div><div class="stat-card-value">'+value+'</div><div class="stat-card-sub">'+sub+'</div></div>';}
 
@@ -1467,8 +1745,12 @@ function checkAndSaveTx(){
   var amount=document.getElementById("aAmount").value,date=document.getElementById("aDate").value;
   var desc=document.getElementById("aDesc").value.trim(),branch=document.getElementById("aBranch").value;
   var alertEl=document.getElementById("addAlert");
-  if(!amount||!date||!desc){alertEl.innerHTML='<div class="alert alert-error">Please fill in all required fields.</div>';return;}
-  if(isNaN(amount)||Number(amount)<=0){alertEl.innerHTML='<div class="alert alert-error">Please enter a valid positive amount.</div>';return;}
+  var safeDesc=sanitizeText(desc,200);
+  var safeAmount=sanitizeCurrency(amount);
+  if(!safeAmount||!date||!safeDesc){alertEl.innerHTML='<div class="alert alert-error">Please fill in all required fields with valid values.</div>';return;}
+  if(safeAmount<=0){alertEl.innerHTML='<div class="alert alert-error">Amount must be greater than zero.</div>';return;}
+  if(safeAmount>9999999){alertEl.innerHTML='<div class="alert alert-error">Amount exceeds maximum allowed (R9,999,999).</div>';return;}
+  desc=safeDesc;amount=String(safeAmount);
   // DUPLICATE DETECTION
   var dup=allTransactions.find(function(t){return t.branch===branch&&String(t.amount)===String(Number(amount))&&t.date===date&&t.description.toLowerCase()===desc.toLowerCase();});
   if(dup){
@@ -1577,11 +1859,17 @@ function submitRequest(){
   var accNum=document.getElementById("reqAccNum").value.trim(),bank=document.getElementById("reqBank").value.trim();
   var branchCode=document.getElementById("reqBranchCode").value.trim();
   var al=document.getElementById("reqAlert");
+  var safeReqAmount=sanitizeCurrency(amount);
+  var accNumRx=/^[0-9]{6,16}$/;
+  var branchCodeRx=/^[0-9]{4,9}$/;
   if(!type||!purpose||!eventDate||!amount||!recipient||!accNum||!bank||!branchCode){al.innerHTML='<div class="alert alert-error">Please fill in all required fields.</div>';return;}
+  if(!safeReqAmount||safeReqAmount<=0){al.innerHTML='<div class="alert alert-error">Please enter a valid amount greater than zero.</div>';return;}
+  if(!accNumRx.test(accNum)){al.innerHTML='<div class="alert alert-error">Account number must be 6-16 digits only.</div>';return;}
+  if(!branchCodeRx.test(branchCode)){al.innerHTML='<div class="alert alert-error">Branch code must be 4-9 digits only.</div>';return;}
   var req={requestType:type,branch:branch,purposeOfFunds:purpose,ifOther:document.getElementById("reqOther").value.trim(),dateOfEvent:eventDate,kmsIfTravel:document.getElementById("reqKms").value||"",amountRands:Number(amount),recipientName:recipient,accountNumber:accNum,bankOfRecipient:bank,branchCodeOfRecipient:branchCode,status:"pending",submittedBy:currentUser.email,submittedByName:(currentProfile.firstName||"")+" "+(currentProfile.lastName||""),createdAt:firebase.firestore.FieldValue.serverTimestamp()};
   document.getElementById("reqSI").style.display="block";
   db.collection("fundRequests").add(req).then(function(){
-    writeAuditLog("approve","Fund request submitted: "+purpose+" ("+fmt(Number(amount))+") by "+(currentProfile.firstName||"")+" for "+getBranchName(branch),currentProfile.email,branch,currentProfile.branch);
+    writeAuditLog("add","Fund request submitted: "+purpose+" ("+fmt(Number(amount))+") by "+(currentProfile.firstName||"")+" for "+getBranchName(branch),currentProfile.email,branch,currentProfile.branch);
     document.getElementById("reqSI").style.display="none";
     al.innerHTML='<div class="alert alert-success">&#10003; Request submitted! The Head Treasurer will review it.</div>';
     setTimeout(function(){navigateTo("requests");},2000);
@@ -1951,6 +2239,15 @@ function renderIntegrity(){
   html+="</tbody></table></div>";
 
   // Backup Import Panel
+  // Data Snapshot / Rollback
+  html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">&#128190; Data Snapshot (Rollback)</span></div>'
+    +'<div style="padding:20px">'
+    +'<div style="background:rgba(37,99,235,0.06);border:1px solid rgba(37,99,235,0.15);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--blue)">'
+    +'&#128161; <strong>Rollback strategy:</strong> Export a full JSON snapshot now. If something goes wrong after deployment, restore by re-importing. Store snapshots offline (USB / encrypted drive).'
+    +'</div>'
+    +'<button class="btn btn-navy" onclick="exportSnapshot()" style="margin-right:10px">&#11015; Export Full Snapshot</button>'
+    +'<div id="snapshotStatus" style="margin-top:10px;font-size:12px;color:var(--gray-500)"></div>'
+    +'</div></div>';
   html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">&#128229; Backup Data Import</span></div>'
     +'<div style="padding:20px">'
     +'<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#92400e">'
@@ -1962,7 +2259,82 @@ function renderIntegrity(){
     +'<div id="importLog" style="margin-top:16px;font-size:12px;color:#374151"></div>'
     +'</div></div>';
 
+  // Maintenance notice panel
+  html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">&#9888; Site Maintenance Notice</span></div>'
+    +'<div style="padding:20px">'
+    +'<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Post a warning banner visible to all users when maintenance is scheduled. Leave blank and deactivate to remove it.</div>'
+    +'<div class="fg"><label>Maintenance Message</label><input type="text" id="maintMsg" placeholder="e.g. The portal will be down on Saturday 26 April from 10:00–12:00 for updates." style="width:100%"/></div>'
+    +'<div style="display:flex;gap:10px;margin-top:4px">'
+    +'<button class="btn btn-navy" onclick="activateMaintenance()">&#9888; Activate Banner</button>'
+    +'<button class="btn btn-outline" onclick="deactivateMaintenance()">&#10005; Deactivate</button>'
+    +'</div>'
+    +'<div id="maintStatus" style="margin-top:10px;font-size:12px;color:var(--gray-500)"></div>'
+    +'</div></div>';
+  // App log viewer
+  html+='<div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">&#128220; App Error Log (This Session)</span><button class="btn btn-outline btn-sm" onclick="clearAppLogs()">Clear</button></div>';
+  var errLogs=appLogs.filter(function(l){return l.level==="error"||l.level==="warn";});
+  if(errLogs.length===0){
+    html+='<div style="text-align:center;padding:28px;color:var(--gray-400)">&#10003; No errors logged this session</div>';
+  } else {
+    html+='<div style="padding:0 16px">';
+    errLogs.slice(-20).reverse().forEach(function(l){
+      var col=l.level==="error"?"var(--red)":"var(--amber)";
+      html+='<div style="padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;gap:10px;align-items:flex-start">'
+        +'<span style="background:'+col+'20;color:'+col+';padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0">'+l.level+'</span>'
+        +'<div style="flex:1;font-size:12px;color:var(--gray-700);word-break:break-all">'+escHtml(l.message)+'</div>'
+        +'<div style="font-size:10px;color:var(--gray-400);white-space:nowrap">'+l.ts.split("T")[1].substring(0,8)+'</div></div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+
   document.getElementById("pageContent").innerHTML=html;
+}
+function clearAppLogs(){appLogs=[];renderIntegrity();}
+function activateMaintenance(){
+  var msg=document.getElementById("maintMsg");
+  var st=document.getElementById("maintStatus");
+  if(!msg||!msg.value.trim()){if(st)st.textContent="Please enter a maintenance message.";return;}
+  setMaintenanceNotice(msg.value.trim(),true).then(function(){
+    showMaintenanceBanner(msg.value.trim());
+    if(st)st.innerHTML='<span style="color:var(--green)">&#10003; Banner activated and visible to all users.</span>';
+    writeAuditLog("system","Maintenance banner activated: "+msg.value.trim(),currentProfile.email,"admin","all");
+  }).catch(function(e){if(st)st.textContent="Error: "+e.message;});
+}
+function deactivateMaintenance(){
+  var st=document.getElementById("maintStatus");
+  setMaintenanceNotice("",false).then(function(){
+    var el=document.getElementById("maintenanceBanner");if(el)el.style.display="none";
+    if(st)st.innerHTML='<span style="color:var(--green)">&#10003; Maintenance banner deactivated.</span>';
+    writeAuditLog("system","Maintenance banner deactivated",currentProfile.email,"admin","all");
+  }).catch(function(e){if(st)st.textContent="Error: "+e.message;});
+}
+
+
+// ===== DATA SNAPSHOT / ROLLBACK =====
+function exportSnapshot(){
+  var status=document.getElementById("snapshotStatus");
+  if(status)status.textContent="&#9729; Collecting data...";
+  var snapshot={
+    exportedAt:new Date().toISOString(),
+    exportedBy:currentProfile.email,
+    portalVersion:"v3.0",
+    npo:"NPO 276-037",
+    transactions:allTransactions.map(function(t){return Object.assign({},t);}),
+    fundRequests:allRequests.map(function(r){return Object.assign({},r);}),
+    users:allUsers.map(function(u){return{uid:u.uid,firstName:u.firstName,lastName:u.lastName,email:u.email,branch:u.branch,role:u.role,status:u.status};}),
+    auditLog:auditLogs.slice(0,100).map(function(l){return Object.assign({},l,{timestamp:l.timestamp&&l.timestamp.toDate?l.timestamp.toDate().toISOString():l.timestamp});})
+  };
+  var json=JSON.stringify(snapshot,null,2);
+  var blob=new Blob([json],{type:"application/json"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  var dateStr=new Date().toISOString().split("T")[0];
+  a.href=url;a.download="RCV_Treasury_Snapshot_"+dateStr+".json";a.click();
+  URL.revokeObjectURL(url);
+  writeAuditLog("system","Full data snapshot exported by IT Admin",currentProfile.email,"admin","all");
+  if(status)status.textContent="&#10003; Snapshot downloaded — "+allTransactions.length+" transactions, "+allUsers.length+" users.";
+  appLog("info","Data snapshot exported",{txCount:allTransactions.length,userCount:allUsers.length});
 }
 
 // ===== BACKUP CSV IMPORT =====
@@ -2181,7 +2553,25 @@ function changePassword(){
   });
 }
 
-// MOBILE
+// ── MAINTENANCE BANNER FUNCTIONS ──
+function showMaintenanceBanner(msg){
+  var el=document.getElementById("maintenanceBanner");
+  if(!el)return;
+  el.style.display="flex";
+  el.innerHTML='<span class="maint-icon">&#9888;</span>'
+    +'<div class="maint-text"><strong>Upcoming Maintenance:</strong> '+escHtml(msg)+'</div>'
+    +'<button class="maint-dismiss" onclick="document.getElementById(\'maintenanceBanner\').style.display=\'none\'">Dismiss</button>';
+  el.className="maintenance-banner";
+}
+
+// IT Admin: set/clear maintenance notice
+function setMaintenanceNotice(msg,active){
+  return db.collection("siteConfig").doc("maintenance").set({
+    active:active,message:msg||"",updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:currentProfile?currentProfile.email:"unknown"
+  });
+}
+
+// ── MOBILE
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open");document.getElementById("mobOverlay").style.display=document.getElementById("sidebar").classList.contains("mob-open")?"block":"none";}
 function closeMobileMenu(){document.getElementById("sidebar").classList.remove("mob-open");document.getElementById("mobOverlay").style.display="none";}
 window.addEventListener("resize",function(){if(window.innerWidth>900){closeMobileMenu();}});
