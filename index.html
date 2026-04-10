@@ -983,7 +983,7 @@ var permBannerShown=false;
 firebase.initializeApp(FIREBASE_CONFIG);
 db=firebase.firestore(); auth=firebase.auth();
 var googleProvider=new firebase.auth.GoogleAuthProvider();
-googleProvider.setCustomParameters({prompt:"select_account"});
+googleProvider.setCustomParameters({prompt:"select_account",client_id:"209970272665-litlp5njoqjg3f630ivgees78mtmhbh0.apps.googleusercontent.com"});
 
 function doGoogleSignIn(){
   auth.signInWithPopup(googleProvider).then(function(result){
@@ -1448,36 +1448,7 @@ function showPermissionBanner(){
     +'</div>'
     +'<details style="margin-top:10px">'
     +'<summary style="cursor:pointer;font-size:12px;font-weight:700;color:#93c5fd">&#128196; Click to show the rules to paste</summary>'
-    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    // Transactions — any signed-in user can read; approved users can write
-    match /transactions/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    // Fund Requests
-    match /fundRequests/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
-    }
-
-    // Users — any authenticated user can read/write own profile
-    match /users/{uid} {
-      allow read, write: if request.auth != null;
-    }
-
-    // Audit Log — anyone can append, only IT Admin can read, nobody can delete
-    match /auditLog/{id} {
-      allow read: if request.auth != null
-        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';
-      allow create: if request.auth != null;
-      allow update, delete: if false;
-    }
-  }
-}</pre>'
+    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /transactions/{id} {\n      allow read: if request.auth != null;\n      allow write: if request.auth != null;\n    }\n\n    match /fundRequests/{id} {\n      allow read: if request.auth != null;\n      allow write: if request.auth != null;\n    }\n\n    match /users/{uid} {\n      allow read, write: if request.auth != null;\n    }\n\n    match /auditLog/{id} {\n      allow read: if request.auth != null\n        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';\n      allow create: if request.auth != null;\n      allow update, delete: if false;\n    }\n  }\n}</pre>'
     +'</details>'
     +'</div>'
     +'<button onclick="document.getElementById(\'permBanner\').remove();permBannerShown=false;" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;flex-shrink:0">&#10005;</button>'
