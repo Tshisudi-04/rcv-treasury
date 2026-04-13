@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
 /* ============================================================
    RC VAAL TREASURY PORTAL v3 — UNIFIED GLASS THEME
@@ -188,9 +189,6 @@ body::before{
   50%{opacity:0.8;box-shadow:0 0 0 6px rgba(22,163,74,0);}
 }
 .security-bar span{color:rgba(255,255,255,0.65);}
-.security-bar-left{display:flex;align-items:center;gap:16px;flex:1;}
-.security-bar-right{display:flex;align-items:center;gap:16px;margin-left:auto;}
-.security-bar-item{display:flex;align-items:center;gap:6px;}
 
 /* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
@@ -539,6 +537,17 @@ tr:hover td{background:rgba(192,21,42,0.03);}
 .nav-item:hover{background:rgba(192,21,42,0.14);color:rgba(255,255,255,0.82);}
 .nav-item.active{background:rgba(192,21,42,0.22);color:white;font-weight:600;border-left-color:var(--primary);}
 .nav-item-icon{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.nav-item-icon svg,.nav-item-icon i[data-lucide]{width:16px;height:16px;stroke:rgba(255,255,255,0.48);}
+.nav-item:hover .nav-item-icon svg,.nav-item:hover .nav-item-icon i[data-lucide]{stroke:rgba(255,255,255,0.85);}
+.nav-item.active .nav-item-icon svg,.nav-item.active .nav-item-icon i[data-lucide]{stroke:white;}
+.stat-card-icon i[data-lucide]{width:20px;height:20px;}
+.stat-card-link{cursor:pointer;}
+.stat-card-link:hover{transform:translateY(-3px) scale(1.005);box-shadow:0 16px 48px rgba(192,21,42,0.18);}
+.nav-item-icon i[data-lucide]{width:16px;height:16px;stroke:currentColor;}
+.nav-item.active .nav-item-icon i[data-lucide]{stroke:white;}
+.nav-item:hover .nav-item-icon i[data-lucide]{stroke:rgba(255,255,255,0.85);}
+.stat-card-icon i[data-lucide]{width:20px;height:20px;stroke:currentColor;}
+.stat-card-link:hover{transform:translateY(-3px) scale(1.005);box-shadow:var(--glass-shadow-hover);}
 .nav-item.active .nav-item-icon{background:rgba(192,21,42,0.25);}
 .sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.05);}
 .signout-btn{
@@ -809,6 +818,15 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
         </select>
       </div>
       <button class="btn-primary" onclick="doRegister()">Submit Registration &nbsp;&#8594;</button>
+      <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+        <span style="font-size:12px;color:rgba(255,255,255,0.35)">or register with</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
+      </div>
+      <button onclick="doGoogleRegister()" style="width:100%;padding:11px;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.14);border-radius:10px;color:rgba(255,255,255,0.85);font-size:14px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.12)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/></svg>
+        Register with Google
+      </button>
       <div class="auth-link">Already have an account? <a onclick="showLogin()">Sign in</a></div>
     </div>
   </div>
@@ -842,7 +860,7 @@ body.dark-mode .expense-extra{background:rgba(255,255,255,0.03);}
       <div class="security-bar-item">&#128203; <span>Audit Trail Active</span></div>
       <div class="security-bar-item">&#128375; <span>Fraud Detection On</span></div>
     </div>
-    <div class="security-bar-right">
+    <div class="security-bar-left">
       <div class="security-bar-item">Session: <span id="secBarTimer">30:00</span></div>
       <div class="security-bar-item">User: <span id="secBarUser"></span></div>
     </div>
@@ -977,13 +995,57 @@ var selectedType="income",reportType="month",currentPage="";
 var pendingTxData=null,pendingDeleteId=null;
 var loginAttempts=0,lockoutActive=false;
 var sessionTimer=SESSION_TIMEOUT,sessionInterval=null,sessionWarnShown=false;
-var permBannerShown=false;
 
 // INIT
 firebase.initializeApp(FIREBASE_CONFIG);
 db=firebase.firestore(); auth=firebase.auth();
 var googleProvider=new firebase.auth.GoogleAuthProvider();
-googleProvider.setCustomParameters({prompt:"select_account",client_id:"209970272665-litlp5njoqjg3f630ivgees78mtmhbh0.apps.googleusercontent.com"});
+googleProvider.setCustomParameters({prompt:"select_account"});
+
+function doGoogleRegister(){
+  // Google registration — still needs branch/role assigned by IT Admin
+  auth.signInWithPopup(googleProvider).then(function(result){
+    var user=result.user;
+    var email=user.email.toLowerCase();
+    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||email===HEAD_TREASURER_EMAIL.toLowerCase()){
+      // Already an admin — just sign in
+      return;
+    }
+    // Check if already registered
+    db.collection("users").where("email","==",user.email).get().then(function(snap){
+      var errEl=document.getElementById("regError"),sucEl=document.getElementById("regSuccess");
+      if(!snap.empty){
+        // Already exists — let them sign in instead
+        errEl.textContent="This Google account is already registered. Please sign in instead.";
+        errEl.style.display="flex";
+        auth.signOut();
+        return;
+      }
+      // Create pending profile
+      var names=user.displayName?user.displayName.split(" "):["",""];
+      var fn=names[0]||"";
+      var ln=names.slice(1).join(" ")||"";
+      db.collection("users").doc(user.uid).set({
+        uid:user.uid,firstName:fn,lastName:ln,
+        email:user.email,branch:"",role:"",
+        status:"pending",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+        signInMethod:"google"
+      }).then(function(){
+        writeAuditLog("register","Google registration — pending approval: "+user.email,"system","unknown","all");
+        auth.signOut();
+        if(sucEl){
+          sucEl.textContent="Google registration submitted! The IT Administrator will assign your branch and role before you can access the portal. You'll receive an email once approved.";
+          sucEl.style.display="flex";
+        }
+        sendApplicantPendingEmail(user.email,fn,ln,"Pending assignment","Pending");
+      });
+    });
+  }).catch(function(e){
+    var errEl=document.getElementById("regError");
+    if(errEl){errEl.textContent="Google sign-up failed: "+e.message;errEl.style.display="flex";}
+  });
+}
 
 function doGoogleSignIn(){
   auth.signInWithPopup(googleProvider).then(function(result){
@@ -1348,34 +1410,35 @@ function setupSidebar(){
   var nav=document.getElementById("sidebarNav"),items=[];
   if(p.role==="superadmin"){
     items.push({section:"Security Operations"});
-    items.push({id:"soc",icon:"&#128737;",label:"SOC Dashboard"});
-    items.push({id:"threats",icon:"&#9888;",label:"Threat Monitor",badge:true});
-    items.push({id:"integrity",icon:"&#128268;",label:"System Integrity"});
+    items.push({id:"soc",icon:"shield",label:"SOC Dashboard"});
+    items.push({id:"threats",icon:"triangle-alert",label:"Threat Monitor",badge:true});
+    items.push({id:"integrity",icon:"cpu",label:"System Integrity"});
     items.push({section:"Investigation"});
-    items.push({id:"audit",icon:"&#128270;",label:"Incident Log"});
+    items.push({id:"audit",icon:"search",label:"Incident Log"});
     items.push({section:"Administration"});
-    items.push({id:"users",icon:"&#128100;",label:"Entity Management",badge:true});
+    items.push({id:"users",icon:"users",label:"Entity Management",badge:true});
     items.push({section:"Account"});
-    items.push({id:"settings",icon:"&#9881;",label:"Settings"});
+    items.push({id:"settings",icon:"settings",label:"Settings"});
   } else {
     items.push({section:"Main"});
-    items.push({id:"dashboard",icon:"&#128202;",label:"Dashboard"});
-    if(p.role==="headtreasurer") items.push({id:"branches",icon:"&#127968;",label:"All Branches"});
-    items.push({id:"transactions",icon:"&#128179;",label:"Transactions"});
-    if(p.role!=="council") items.push({id:"add",icon:"&#43;",label:"Add Transaction"});
+    items.push({id:"dashboard",icon:"layout-dashboard",label:"Dashboard"});
+    if(p.role==="headtreasurer") items.push({id:"branches",icon:"building-2",label:"All Branches"});
+    items.push({id:"transactions",icon:"receipt",label:"Transactions"});
+    if(p.role!=="council") items.push({id:"add",icon:"plus-circle",label:"Add Transaction"});
     items.push({section:"Funds"});
-    items.push({id:"requests",icon:"&#128203;",label:"Fund Requests",badge:true});
-    if(p.role==="treasurer") items.push({id:"newrequest",icon:"&#128228;",label:"New Request"});
+    items.push({id:"requests",icon:"clipboard-list",label:"Fund Requests",badge:true});
+    if(p.role==="treasurer") items.push({id:"newrequest",icon:"send",label:"New Request"});
     items.push({section:"Reports"});
-    items.push({id:"reports",icon:"&#128196;",label:"Generate Report"});
+    items.push({id:"reports",icon:"bar-chart-2",label:"Generate Report"});
     items.push({section:"Account"});
-    items.push({id:"settings",icon:"&#9881;",label:"Settings"});
+    items.push({id:"settings",icon:"settings",label:"Settings"});
   }
   nav.innerHTML="";
   items.forEach(function(item){
     if(item.section){nav.innerHTML+='<div class="nav-section-label">'+item.section+'</div>';}
-    else{nav.innerHTML+='<div class="nav-item" id="nav-'+item.id+'" onclick="navigateTo(\''+item.id+'\')"><div class="nav-item-icon">'+item.icon+'</div><span>'+item.label+'</span>'+( item.badge?'<span class="nav-badge" id="badge-'+item.id+'" style="display:none">0</span>':"")+'</div>';}
+    else{nav.innerHTML+='<div class="nav-item" id="nav-'+item.id+'" onclick="navigateTo(\''+item.id+'\')"><div class="nav-item-icon"><i data-lucide="'+item.icon+'"></i></div><span>'+item.label+'</span>'+( item.badge?'<span class="nav-badge" id="badge-'+item.id+'" style="display:none">0</span>':"")+'</div>';}
   });
+  if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 // ===== DATA LISTENERS =====
@@ -1448,7 +1511,36 @@ function showPermissionBanner(){
     +'</div>'
     +'<details style="margin-top:10px">'
     +'<summary style="cursor:pointer;font-size:12px;font-weight:700;color:#93c5fd">&#128196; Click to show the rules to paste</summary>'
-    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    match /transactions/{id} {\n      allow read: if request.auth != null;\n      allow write: if request.auth != null;\n    }\n\n    match /fundRequests/{id} {\n      allow read: if request.auth != null;\n      allow write: if request.auth != null;\n    }\n\n    match /users/{uid} {\n      allow read, write: if request.auth != null;\n    }\n\n    match /auditLog/{id} {\n      allow read: if request.auth != null\n        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';\n      allow create: if request.auth != null;\n      allow update, delete: if false;\n    }\n  }\n}</pre>'
+    +'<pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;font-size:11px;margin-top:8px;overflow-x:auto;white-space:pre-wrap;line-height:1.5">rules_version = \'2\';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Transactions — any signed-in user can read; approved users can write
+    match /transactions/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Fund Requests
+    match /fundRequests/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Users — any authenticated user can read/write own profile
+    match /users/{uid} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Audit Log — anyone can append, only IT Admin can read, nobody can delete
+    match /auditLog/{id} {
+      allow read: if request.auth != null
+        && request.auth.token.email == \'khathutshelotshisudi@gmail.com\';
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+  }
+}</pre>'
     +'</details>'
     +'</div>'
     +'<button onclick="document.getElementById(\'permBanner\').remove();permBannerShown=false;" style="background:rgba(255,255,255,0.15);border:none;color:white;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;flex-shrink:0">&#10005;</button>'
@@ -1487,6 +1579,23 @@ function isTxLocked(tx){
   var txDate=parseLocalDate(tx.date);
   var cutoff=new Date();cutoff.setDate(cutoff.getDate()-TX_LOCK_DAYS);
   return txDate<cutoff;
+}
+
+// Navigate to transactions filtered by fund
+function navigateToFund(fundKey, fundLabel){
+  currentPage="transactions";
+  document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
+  var navEl=document.getElementById("nav-transactions");if(navEl)navEl.classList.add("active");
+  document.getElementById("topbarTitle").textContent="Transactions — "+fundLabel;
+  var pc=document.getElementById("pageContent");
+  pc.style.opacity="0";pc.style.transform="translateY(8px)";
+  pc.style.transition="opacity 0.15s ease,transform 0.15s ease";
+  setTimeout(function(){
+    var txs=getMyTxs().filter(function(t){return t.fund===fundKey;});
+    pc.innerHTML=buildTxTable(txs,fundLabel,false);
+    pc.style.opacity="1";pc.style.transform="translateY(0)";
+    if(typeof lucide!=="undefined")lucide.createIcons();
+  },120);
 }
 
 // NAVIGATE
@@ -1543,13 +1652,13 @@ function navigateTo(page){
 // ===== DASHBOARD =====
 function renderDashboard(){
   var txs=getMyTxs(),s=getSummary(txs);
-  var isAdmin=currentProfile.role==="headtreasurer"||currentProfile.role==="superadmin";
+  var isAdmin=currentProfile.role==="headtreasurer";
   var pendingReqs=allRequests.filter(function(r){return r.status==="pending";}).length;
   var html='<div class="stats-grid">';
-  html+=statCard("Total Income",fmt(s.income),"&#128200;","icon-green","All time");
-  html+=statCard("Total Expenses",fmt(s.expenses),"&#128201;","icon-red","All time");
-  html+=statCard("Net Balance",fmt(s.balance),"&#128176;","icon-navy","All time");
-  html+=statCard("Transactions",txs.length+" total","&#128179;","icon-blue","All records");
+  html+=statCard("Total Income",fmt(s.income),"trending-up","icon-green","All time","navigateTo('transactions')");
+  html+=statCard("Total Expenses",fmt(s.expenses),"trending-down","icon-red","All time","navigateTo('transactions')");
+  html+=statCard("Net Balance",fmt(s.balance),"wallet","icon-navy","All time","navigateTo('reports')");
+  html+=statCard("Transactions",txs.length+" total","receipt","icon-blue","All records","navigateTo('transactions')");
   html+='</div>';
   if(isAdmin){
     html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"><div style="font-size:15px;font-weight:700;color:var(--gray-800)">Branch Overview</div><button class="btn btn-outline btn-sm" onclick="navigateTo(\'branches\')">View All &#8594;</button></div>';
@@ -1567,17 +1676,21 @@ function renderDashboard(){
   if(pendingReqs>0&&isAdmin) html+='<div class="alert alert-info" style="margin-bottom:20px">&#128203; <strong>'+pendingReqs+' pending fund request'+( pendingReqs>1?"s":"")+'</strong> awaiting review. <a href="#" onclick="navigateTo(\'requests\')" style="font-weight:700;color:var(--blue)">Review now &#8594;</a></div>';
   var recent=getMyTxs().slice(0,8);
   // Fund totals
-  var FUNDS=[{key:"tithes",label:"Tithes & Offerings"},{key:"donations",label:"Donations"},{key:"transport",label:"Transport Fund"},{key:"events",label:"Events Fund"},{key:"fundraising",label:"Fundraising Events"}];
+  var FUNDS=[
+    {key:"tithes",label:"Tithes & Offerings",icon:"heart-handshake"},
+    {key:"donations",label:"Donations",icon:"gift"},
+    {key:"transport",label:"Transport Fund",icon:"bus"},
+    {key:"events",label:"Events Fund",icon:"calendar-days"},
+    {key:"fundraising",label:"Fundraising Events",icon:"banknote"}
+  ];
   html+='<div class="card" style="margin-bottom:24px"><div class="card-header"><span class="card-title">Fund Totals</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0">';
   FUNDS.forEach(function(f){
     var fTxs=txs.filter(function(t){return t.fund===f.key;});
     var fs=getSummary(fTxs);
     var balCol=fs.balance>=0?"var(--green)":"var(--red)";
-    html+='<div style="padding:16px;border-right:1px solid rgba(0,0,0,0.05);border-bottom:1px solid rgba(0,0,0,0.05)">'
-      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-500);margin-bottom:6px">'+f.label+'</div>'
-      +'<div style="font-size:15px;font-weight:800;color:'+balCol+'">'+fmt(fs.balance)+'</div>'
-      +'<div style="font-size:11px;color:var(--gray-400);margin-top:3px">In: '+fmt(fs.income)+' · Out: '+fmt(fs.expenses)+'</div>'
-      +'</div>';
+    html+='<div onclick="navigateToFund(\''+f.key+'\',\''+f.label+'\')" '
+      +'style="padding:16px;border-right:1px solid rgba(0,0,0,0.05);border-bottom:1px solid rgba(0,0,0,0.05);cursor:pointer;transition:background 0.15s" '
+      +'onmouseover="this.style.background=\'rgba(192,21,42,0.04)\'" onmouseout="this.style.background=\'\'">'      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">'      +'<i data-lucide="'+f.icon+'" style="width:14px;height:14px;color:var(--primary);stroke-width:2"></i>'      +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-500)">'+f.label+'</div>'      +'</div>'      +'<div style="font-size:15px;font-weight:800;color:'+balCol+'">'+fmt(fs.balance)+'</div>'      +'<div style="font-size:11px;color:var(--gray-400);margin-top:3px">In: '+fmt(fs.income)+' · Out: '+fmt(fs.expenses)+'</div>'      +'<div style="font-size:10px;color:var(--primary);font-weight:600;margin-top:5px">View &#8594;</div>'      +'</div>';
   });
   html+='</div></div>';
   html+='<div class="card"><div class="card-header"><span class="card-title">Recent Transactions</span><button class="btn btn-outline btn-sm" onclick="navigateTo(\'transactions\')">View All</button></div>';
@@ -1587,8 +1700,20 @@ function renderDashboard(){
   }).join("")+'</tbody></table>';
   html+='</div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
-function statCard(label,value,icon,iconClass,sub){return'<div class="stat-card"><div class="stat-card-header"><div class="stat-card-label">'+label+'</div><div class="stat-card-icon '+iconClass+'">'+icon+'</div></div><div class="stat-card-value">'+value+'</div><div class="stat-card-sub">'+sub+'</div></div>';}
+function statCard(label,value,icon,iconClass,sub,onclick){
+  var cls='stat-card'+(onclick?' stat-card-link':'');
+  var oc=onclick?(' onclick="'+onclick+'" style="cursor:pointer"'):'';
+  return'<div class="'+cls+'"'+oc+'>'
+    +'<div class="stat-card-header">'
+    +'<div class="stat-card-label">'+label+'</div>'
+    +'<div class="stat-card-icon '+iconClass+'"><i data-lucide="'+icon+'" style="width:20px;height:20px;stroke-width:2"></i></div>'
+    +'</div>'
+    +'<div class="stat-card-value">'+value+'</div>'
+    +'<div class="stat-card-sub">'+sub+'</div>'
+    +'</div>';
+}
 
 // ===== BRANCHES =====
 function renderBranches(){
@@ -1606,14 +1731,16 @@ function renderBranches(){
   });
   html+='</div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function viewBranch(key){
   var bTxs=allTransactions.filter(function(t){return t.branch===key;}),s=getSummary(bTxs),col=getBranchColor(key);
   var html='<button class="btn btn-outline btn-sm" onclick="navigateTo(\'branches\')" style="margin-bottom:20px">&#8592; All Branches</button>';
   html+='<div style="display:flex;align-items:center;gap:14px;margin-bottom:24px"><div style="width:48px;height:48px;border-radius:10px;background:'+col+';display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px">'+key.toUpperCase().slice(0,2)+'</div><div><div style="font-size:20px;font-weight:800;color:var(--gray-800)">'+BRANCHES[key].name+'</div><div style="font-size:13px;color:var(--gray-400)">'+BRANCHES[key].location+'</div></div></div>';
-  html+='<div class="stats-grid">'+statCard("Income",fmt(s.income),"&#128200;","icon-green","All time")+statCard("Expenses",fmt(s.expenses),"&#128201;","icon-red","All time")+statCard("Balance",fmt(s.balance),"&#128176;","icon-navy","All time")+statCard("Records",bTxs.length,"&#128179;","icon-blue","All")+'</div>';
+  html+='<div class="stats-grid">'+statCard("Income",fmt(s.income),"trending-up","icon-green","All time")+statCard("Expenses",fmt(s.expenses),"trending-down","icon-red","All time")+statCard("Balance",fmt(s.balance),"wallet","icon-navy","All time")+statCard("Records",bTxs.length,"receipt","icon-blue","All")+'</div>';
   html+=buildTxTable(bTxs,"Transactions — "+BRANCHES[key].name,false);
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
   document.getElementById("topbarTitle").textContent=BRANCHES[key].name;
 }
 
@@ -1704,6 +1831,7 @@ function renderAddTransaction(){
     +'<button class="btn btn-navy" style="width:100%;padding:13px;font-size:14px;justify-content:center" onclick="checkAndSaveTx()">Save Transaction &#8594;</button>'
     +'<div class="saving-ind" id="savingInd">&#9729; Saving to cloud...</div></div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 var currentTxType="income";
 function setTxType(type){
@@ -1780,6 +1908,7 @@ function renderRequests(){
     });
   }
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function approveRequest(id){
   var note=prompt("Optional approval note (or leave blank):");
@@ -1821,6 +1950,7 @@ function renderNewRequest(){
     +'<div style="display:flex;gap:12px;margin-top:8px"><button class="btn btn-navy" style="flex:1;padding:13px;justify-content:center" onclick="submitRequest()">Submit Request &#8594;</button><button class="btn btn-outline" onclick="navigateTo(\'requests\')">Cancel</button></div>'
     +'<div class="saving-ind" id="reqSI">&#9729; Submitting...</div></div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function calcTravel(){var k=parseFloat(document.getElementById("reqKms").value)||0;if(k>0){var a=document.getElementById("reqAmount");if(a)a.value=(k*3.85).toFixed(2);}}
 function submitRequest(){
@@ -1840,7 +1970,7 @@ function submitRequest(){
   var req={requestType:type,branch:branch,purposeOfFunds:purpose,ifOther:document.getElementById("reqOther").value.trim(),dateOfEvent:eventDate,kmsIfTravel:document.getElementById("reqKms").value||"",amountRands:Number(amount),recipientName:recipient,accountNumber:accNum,bankOfRecipient:bank,branchCodeOfRecipient:branchCode,status:"pending",submittedBy:currentUser.email,submittedByName:(currentProfile.firstName||"")+" "+(currentProfile.lastName||""),createdAt:firebase.firestore.FieldValue.serverTimestamp()};
   document.getElementById("reqSI").style.display="block";
   db.collection("fundRequests").add(req).then(function(){
-    writeAuditLog("add","Fund request submitted: "+purpose+" ("+fmt(Number(amount))+") by "+(currentProfile.firstName||"")+" for "+getBranchName(branch),currentProfile.email,branch,currentProfile.branch);
+    writeAuditLog("approve","Fund request submitted: "+purpose+" ("+fmt(Number(amount))+") by "+(currentProfile.firstName||"")+" for "+getBranchName(branch),currentProfile.email,branch,currentProfile.branch);
     document.getElementById("reqSI").style.display="none";
     al.innerHTML='<div class="alert alert-success">&#10003; Request submitted! The Head Treasurer will review it.</div>';
     setTimeout(function(){navigateTo("requests");},2000);
@@ -1868,6 +1998,7 @@ function renderAudit(){
   }
   html+='</div></div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 
 // ===== REPORTS =====
@@ -1885,6 +2016,7 @@ function renderReports(){
     +'<div class="alert alert-info" style="margin-bottom:16px">&#128161; Downloads as HTML. Open it and press <strong>Ctrl+P &rarr; Save as PDF</strong> for church records.</div>'
     +'<button class="download-btn" onclick="generateReport()">&#11015; Download Report</button></div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
   updateReportPreview();
 }
 function setRType(type){
@@ -1974,6 +2106,7 @@ function renderUsers(){
   }
   if(!allUsers.length) html+='<div style="text-align:center;padding:48px;color:var(--gray-400)">No registered users yet</div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function approveUser(uid,name){
   var u=allUsers.find(function(x){return x.uid===uid;});
@@ -2105,6 +2238,7 @@ function renderSOC(){
   });
   html+="</div></div>";
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 
 // ===== THREAT MONITOR =====
@@ -2160,6 +2294,7 @@ function renderThreats(){
     html+='</tbody></table></div>';
   }
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 
 // ===== SYSTEM INTEGRITY =====
@@ -2260,6 +2395,7 @@ function renderIntegrity(){
   html+='</div>';
 
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function clearAppLogs(){appLogs=[];renderIntegrity();}
 function activateMaintenance(){
@@ -2439,6 +2575,7 @@ function renderSettings(){
     +'</div></div>';
   html+='</div>';
   document.getElementById("pageContent").innerHTML=html;
+  if(typeof lucide!=="undefined")lucide.createIcons();
 }
 function toggleDarkMode(on){
   if(on){
