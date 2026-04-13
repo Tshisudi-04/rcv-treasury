@@ -978,7 +978,8 @@ function initEmailJS(){
   } catch(e){ console.log("EmailJS init failed:", e); }
 }
 initEmailJS(); // Init immediately so emails work at registration before login
-var HEAD_TREASURER_EMAIL="madzhiek@gmail.com";
+var HEAD_TREASURER_EMAILS=["madzhiek@gmail.com"]; // Add more HT emails here if needed
+function isHeadTreasurer(email){return HEAD_TREASURER_EMAILS.some(function(e){return e.toLowerCase()===email.toLowerCase();});}
 var TX_LOCK_DAYS=30; // transactions older than this cannot be deleted
 var SESSION_TIMEOUT=5*60; // 5 minutes in seconds
 var SESSION_WARN_AT=1*60; // show warning at 1 minute remaining
@@ -1007,7 +1008,7 @@ function doGoogleRegister(){
   auth.signInWithPopup(googleProvider).then(function(result){
     var user=result.user;
     var email=user.email.toLowerCase();
-    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||email===HEAD_TREASURER_EMAIL.toLowerCase()){
+    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||isHeadTreasurer(email)){
       // Already an admin — just sign in
       return;
     }
@@ -1053,7 +1054,7 @@ function doGoogleSignIn(){
     var user=result.user;
     var email=user.email.toLowerCase();
     // Superadmin and head treasurer bypass profile check
-    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||email===HEAD_TREASURER_EMAIL.toLowerCase()){
+    if(email===SUPER_ADMIN_EMAIL.toLowerCase()||isHeadTreasurer(email)){
       return; // onAuthStateChanged handles it
     }
     // Check if this Google user has been approved in our system
@@ -1246,7 +1247,7 @@ function loadUserProfile(user){
   if(email===SUPER_ADMIN_EMAIL.toLowerCase()){
     currentProfile={uid:user.uid,email:user.email,firstName:"Khathu",lastName:"(IT Admin)",role:"superadmin",branch:"pe",status:"approved"};
     initApp();
-  } else if(email===HEAD_TREASURER_EMAIL.toLowerCase()){
+  } else if(isHeadTreasurer(email)){
     currentProfile={uid:user.uid,email:user.email,firstName:"Head",lastName:"Treasurer",role:"headtreasurer",branch:"all",status:"approved"};
     initApp();
   } else {
@@ -1824,7 +1825,7 @@ function renderAddTransaction(){
     +'<div class="fg-row">'+branchSection+'<div class="fg"><label>Fund</label><select id="aFund"><option value="tithes">Tithes &amp; Offerings</option><option value="donations">Donations</option><option value="transport">Transport Fund</option><option value="events">Events Fund</option><option value="fundraising">Fundraising Events</option></select></div></div>'
     +'<div class="fg-row"><div class="fg"><label>Amount (R)</label><input type="number" id="aAmount" placeholder="0.00" min="0" step="0.01"/></div><div class="fg"><label>Date</label><input type="date" id="aDate" value="'+new Date().toISOString().split("T")[0]+'"/></div></div>'
     +'<div class="fg"><label>Description</label><input type="text" id="aDesc" placeholder="e.g. Sunday Service Collection"/></div>'
-    +'<div class="expense-extra" id="expExtra"><div class="form-section-title">Expense Details</div>'
+    +'<div class="fg"><label>Attach Receipt Photo <span style="font-weight:400;color:var(--gray-400)">(optional — phone photos auto-compressed)</span></label>'+'<input type="file" id="aPhotoFile" accept="image/*" style="padding:8px 0;font-size:13px"/>'+'<div id="photoPreview" style="margin-top:8px;display:none"><img id="photoThumb" style="max-width:120px;max-height:80px;border-radius:8px;border:1px solid rgba(0,0,0,0.1)"/><span style="font-size:11px;color:var(--gray-400);margin-left:8px" id="photoSize"></span></div></div>'+'<div class="expense-extra" id="expExtra"><div class="form-section-title">Expense Details</div>'
     +'<div class="fg-row"><div class="fg"><label>What was purchased</label><input type="text" id="aItem" placeholder="e.g. Chairs, printer paper"/></div><div class="fg"><label>Where / Supplier</label><input type="text" id="aVendor" placeholder="e.g. Makro"/></div></div>'
     +'<div class="fg-row"><div class="fg"><label>Payment Method</label><select id="aPayment"><option value="">-- Select --</option><option>Cash</option><option>EFT</option><option>Card</option><option>Cheque</option></select></div><div class="fg"><label>Receipt / Ref No.</label><input type="text" id="aReceipt" placeholder="e.g. RCP-00123"/></div></div></div>'
     +'<div class="alert alert-info" style="margin-bottom:16px">&#128274; All transactions are saved with a full audit trail. Transactions older than '+TX_LOCK_DAYS+' days are locked and cannot be deleted.</div>'
@@ -1834,6 +1835,46 @@ function renderAddTransaction(){
   if(typeof lucide!=="undefined")lucide.createIcons();
 }
 var currentTxType="income";
+// Photo preview
+document.addEventListener("change", function(e){
+  if(e.target && e.target.id==="aPhotoFile"){
+    var f=e.target.files[0];
+    if(!f) return;
+    var prev=document.getElementById("photoPreview");
+    var thumb=document.getElementById("photoThumb");
+    var sz=document.getElementById("photoSize");
+    if(prev&&thumb&&sz){
+      prev.style.display="flex";
+      prev.style.alignItems="center";
+      var url=URL.createObjectURL(f);
+      thumb.src=url;
+      sz.textContent="Original: "+(f.size/1024/1024).toFixed(1)+"MB — will be compressed before saving";
+    }
+  }
+});
+
+function compressPhoto(file, callback){
+  // Compress any image to max 1200x1200 at 70% JPEG quality
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var maxW=1200, maxH=1200;
+      var w=img.width, h=img.height;
+      if(w>maxW||h>maxH){
+        if(w/h>maxW/maxH){h=Math.round(h*(maxW/w));w=maxW;}
+        else{w=Math.round(w*(maxH/h));h=maxH;}
+      }
+      var canvas=document.createElement("canvas");
+      canvas.width=w; canvas.height=h;
+      canvas.getContext("2d").drawImage(img,0,0,w,h);
+      callback(canvas.toDataURL("image/jpeg",0.70));
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function setTxType(type){
   currentTxType=type;
   document.getElementById("btnInc").className="type-btn"+(type==="income"?" active-income":"");
@@ -1875,13 +1916,26 @@ function confirmSaveTx(){
     if(it)tx.item=it.value.trim();if(ve)tx.vendor=ve.value.trim();if(pa)tx.payment=pa.value;if(re)tx.receipt=re.value.trim();
   }
   var si=document.getElementById("savingInd");if(si)si.style.display="block";
-  db.collection("transactions").add(tx).then(function(docRef){
-    writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]",currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
-    if(si)si.style.display="none";
-    var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved and audit log updated.</div>';
-    ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
-    var ap=document.getElementById("aPayment");if(ap)ap.value="";
-  }).catch(function(e){if(si)si.style.display="none";var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>';});
+  function saveTxToDb(photoData){
+    if(photoData) tx.receiptPhoto=photoData;
+    db.collection("transactions").add(tx).then(function(docRef){
+      writeAuditLog("add","Transaction added: "+desc+" ("+fmt(amount)+") on "+date+" ["+branch+"]"+(photoData?" [receipt attached]":""),currentProfile.email,branch,currentProfile.branch==="all"?"all":currentProfile.branch);
+      if(si)si.style.display="none";
+      var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-success">&#10003; Transaction saved'+(photoData?' with receipt photo':'')+" and audit log updated.</div>";
+      ["aAmount","aDesc","aItem","aVendor","aReceipt"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
+      var ap=document.getElementById("aPayment");if(ap)ap.value="";
+      var ph=document.getElementById("aPhotoFile");if(ph)ph.value="";
+      var pv=document.getElementById("photoPreview");if(pv)pv.style.display="none";
+    }).catch(function(e){if(si)si.style.display="none";var al=document.getElementById("addAlert");if(al)al.innerHTML='<div class="alert alert-error">Error: '+e.message+'</div>';});
+  }
+  var photoEl=document.getElementById("aPhotoFile");
+  if(photoEl&&photoEl.files&&photoEl.files[0]){
+    compressPhoto(photoEl.files[0],function(dataUrl){
+      saveTxToDb(dataUrl);
+    });
+  } else {
+    saveTxToDb(null);
+  }
 }
 
 // ===== FUND REQUESTS =====
