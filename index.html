@@ -915,34 +915,18 @@ var SUPER_ADMIN_EMAIL="khathutshelotshisudi@gmail.com";
   ├─────────────────────────────────────────────────────────────────────┤
   │  rules_version = '2';                                                │
   │  service cloud.firestore {                                           │
-  │    match /databases/{db}/documents {                                 │
-  │      // Only authenticated, approved users can read/write            │
+  │    match /databases/{database}/documents {                           │
   │      match /transactions/{id} {                                      │
-  │        allow read: if request.auth != null;                          │
-  │        allow write: if request.auth != null                          │
-  │          && get(/databases/$(db)/documents/users/$(request.auth.uid))│
-  │             .data.status == 'approved';                              │
+  │        allow read, write: if request.auth != null;                   │
   │      }                                                               │
   │      match /fundRequests/{id} {                                      │
-  │        allow read: if request.auth != null;                          │
-  │        allow write: if request.auth != null                          │
-  │          && get(/databases/$(db)/documents/users/$(request.auth.uid))│
-  │             .data.status == 'approved';                              │
+  │        allow read, write: if request.auth != null;                   │
   │      }                                                               │
   │      match /users/{uid} {                                            │
-  │        // Users can only read their own doc; admin reads all         │
-  │        allow read: if request.auth != null                           │
-  │          && (request.auth.uid == uid                                 │
-  │             || request.auth.token.email ==                           │
-  │                'khathutshelotshisudi@gmail.com');                    │
-  │        allow write: if request.auth != null;                         │
+  │        allow read, write: if request.auth != null;                   │
   │      }                                                               │
   │      match /auditLog/{id} {                                          │
-  │        allow read: if request.auth != null                           │
-  │          && request.auth.token.email ==                              │
-  │             'khathutshelotshisudi@gmail.com';                        │
-  │        allow create: if request.auth != null;                        │
-  │        allow update, delete: if false; // immutable audit log        │
+  │        allow read, write: if request.auth != null;                   │
   │      }                                                               │
   │    }                                                                 │
   │  }                                                                   │
@@ -1164,7 +1148,7 @@ function doLogin(){
     }
   });
 }
-document.getElementById("lPass").addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+// keydown listener moved to DOMContentLoaded
 
 function startLockout(){
   lockoutActive=true;
@@ -1773,7 +1757,8 @@ function renderTxRows(txs){
       if(locked) delBtn='<span class="lock-icon" title="Locked: transactions older than '+TX_LOCK_DAYS+' days cannot be deleted">&#128274;</span>';
       else delBtn='<button class="del-btn" onclick="requestDelete(\''+t.id+'\',\''+escHtml(t.description)+'\')">&#128465;</button>';
     }
-    return'<tr><td style="color:var(--gray-500);white-space:nowrap">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td><td>'+delBtn+'</td></tr>';
+    var rcpt=t.receiptData?'<button onclick="viewReceipt(\''+t.id+'\')" title="View receipt" style="background:none;border:none;cursor:pointer;margin-left:4px;padding:2px;vertical-align:middle;display:inline-flex"><i data-lucide="image" style="width:13px;height:13px;stroke:var(--blue)"></i></button>':'';
+    return'<tr><td style="color:var(--gray-500);white-space:nowrap">'+t.date+'</td><td style="font-weight:500">'+escHtml(t.description)+rcpt+'</td><td><span class="badge badge-navy">'+getBranchName(t.branch)+'</span></td><td><span class="badge '+( t.type==="income"?"badge-green":"badge-red")+'">'+( t.type==="income"?"Income":"Expense")+'</span></td><td class="'+( t.type==="income"?"amount-pos":"amount-neg")+'">'+( t.type==="income"?"+":"-")+fmt(t.amount)+'</td><td>'+delBtn+'</td></tr>';
   }).join("");
   return'<table><thead><tr><th>Date</th><th>Description</th><th>Branch</th><th>Type</th><th>Amount</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
@@ -1935,6 +1920,25 @@ function confirmSaveTx(){
     });
   } else {
     saveTxToDb(null);
+  }
+}
+
+
+// ===== VIEW RECEIPT =====
+function viewReceipt(txId){
+  var tx=allTransactions.find(function(t){return t.id===txId;});
+  if(!tx||!tx.receiptData){
+    showGlobalError("No receipt attached to this transaction.");return;
+  }
+  var win=window.open("","_blank");
+  if(!win){showGlobalError("Please allow popups to view receipts.");return;}
+  if(tx.receiptData.startsWith("data:image")){
+    win.document.write('<html><head><title>Receipt — '+escHtml(tx.description)+'</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;font-family:sans-serif;}.info{color:#aaa;font-size:12px;margin-top:8px;}</style></head><body><img src="'+tx.receiptData+'" style="max-width:100vw;max-height:95vh;object-fit:contain"/><div class="info">'+escHtml(tx.description)+' — '+escHtml(tx.date)+'</div></body></html>');
+  } else if(tx.receiptData.startsWith("data:application/pdf")){
+    win.document.write('<html><head><title>Receipt — '+escHtml(tx.description)+'</title></head><body style="margin:0"><embed src="'+tx.receiptData+'" width="100%" height="100%" type="application/pdf"/></body></html>');
+  } else {
+    win.close();
+    showGlobalError("Cannot display this receipt format.");
   }
 }
 
@@ -2737,6 +2741,16 @@ function setMaintenanceNotice(msg,active){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open");document.getElementById("mobOverlay").style.display=document.getElementById("sidebar").classList.contains("mob-open")?"block":"none";}
 function closeMobileMenu(){document.getElementById("sidebar").classList.remove("mob-open");document.getElementById("mobOverlay").style.display="none";}
 window.addEventListener("resize",function(){if(window.innerWidth>900){closeMobileMenu();}});
+
+// ===== DOM READY — safe DOM event bindings =====
+document.addEventListener("DOMContentLoaded",function(){
+  var lPass=document.getElementById("lPass");
+  if(lPass) lPass.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+  var lEmail=document.getElementById("lEmail");
+  if(lEmail) lEmail.addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+  var rPass=document.getElementById("rPass");
+  if(rPass) rPass.addEventListener("keydown",function(e){if(e.key==="Enter")doRegister();});
+});
 </script>
 </body>
 </html>
